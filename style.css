@@ -1,0 +1,117 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Arial Black', Gadget, sans-serif;
+  background-color: #000;
+}
+
+.hero-canvas {
+  /* This uses your stadium photo link */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), 
+                    url('https://i.ibb.co/zhwnKS0n/background.jpg');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay {
+  width: 90%;
+  max-width: 550px;
+  text-align: center;
+  color: white;
+  padding: 30px;
+  /* Adds a slight glow to separate from the background */
+  background: rgba(0,0,0,0.3);
+  border-radius: 20px;
+}
+
+.main-title {
+  color: #FF8200; /* Tennessee Orange */
+  font-size: clamp(1.8rem, 7vw, 3rem);
+  line-height: 1.1;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.sub-title {
+  font-family: Arial, sans-serif;
+  font-size: 1.1rem;
+  margin-bottom: 40px;
+  opacity: 0.9;
+}
+
+.share-text {
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Share Buttons */
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.btn-vols {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  background: #FF8200;
+  color: white;
+  padding: 15px;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: transform 0.2s;
+}
+
+.btn-vols:hover {
+  transform: scale(1.03);
+}
+
+/* Review Section */
+.review-callout {
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 30px;
+  margin-bottom: 40px;
+}
+
+.btn-review {
+  display: inline-block;
+  margin-top: 15px;
+  color: #FF8200;
+  text-decoration: none;
+  border: 2px solid #FF8200;
+  padding: 12px 25px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+/* Shop Button & Footer */
+.btn-main-shop {
+  display: inline-block;
+  background: white;
+  color: #000;
+  padding: 15px 30px;
+  text-decoration: none;
+  border-radius: 50px; /* Capsule shape */
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 25px;
+}
+
+.game-time-box {
+  color: #FF8200;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
