@@ -76,6 +76,67 @@ body, html {
   box-sizing: border-box;
 }
 
+.countdown-card {
+  width: 100%;
+  max-width: 450px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin: 0 auto 35px auto;
+  padding: 18px;
+  text-align: center;
+}
+
+.countdown-eyebrow {
+  color: #9E1B32;
+  font-family: Arial, sans-serif;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.countdown-card h2 {
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+
+.countdown-date {
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+  opacity: 0.85;
+}
+
+.countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.countdown-grid div {
+  background: #000;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 10px 6px;
+}
+
+.countdown-grid span {
+  color: #9E1B32;
+  display: block;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.countdown-grid small,
+.countdown-grid strong {
+  font-family: Arial, sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
 .link-group {
   width: 100%;
   max-width: 450px;
