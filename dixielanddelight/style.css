@@ -177,6 +177,94 @@ body, html {
   border-color: #FF0000 !important;
 }
 
+.section-intro {
+  color: rgba(255, 255, 255, 0.72);
+  font-family: Arial, sans-serif;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  margin: -4px 0 16px;
+}
+
+.media-feature,
+.media-card {
+  background: #111;
+  border: 1px solid #2b2b2b;
+  border-radius: 10px;
+  box-sizing: border-box;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  gap: 7px;
+  padding: 16px;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.media-feature {
+  border-color: #9E1B32;
+  margin-bottom: 12px;
+  overflow: hidden;
+  padding-right: 66px;
+  position: relative;
+}
+
+.media-feature::after {
+  align-items: center;
+  background: #9E1B32;
+  border-radius: 50%;
+  color: #fff;
+  content: "▶";
+  display: flex;
+  font-size: 0.85rem;
+  height: 38px;
+  justify-content: center;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+}
+
+.media-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.media-feature:hover,
+.media-card:hover {
+  border-color: #9E1B32;
+  transform: translateY(-2px);
+}
+
+.media-feature strong,
+.media-card strong { font-size: 0.95rem; line-height: 1.25; }
+.media-feature small,
+.media-card small { color: rgba(255, 255, 255, 0.7); font-size: 0.78rem; line-height: 1.35; }
+.media-badge { align-self: flex-start; border-radius: 999px; font-size: 0.62rem; font-weight: bold; letter-spacing: 0.5px; padding: 4px 7px; text-transform: uppercase; }
+.badge-official { background: #9E1B32; color: #fff; }
+.badge-local { background: #31526f; color: #fff; }
+.badge-independent { background: #4a3b60; color: #fff; }
+.badge-podcast { background: #713b59; color: #fff; }
+.badge-latest { background: #c00; color: #fff; }
+.media-action { color: #d96a7e; font-size: 0.73rem; font-weight: bold; margin-top: auto; padding-top: 3px; }
+.media-note { color: rgba(255, 255, 255, 0.5); font-family: Arial, sans-serif; font-size: 0.68rem; line-height: 1.4; margin: 12px 2px 0; }
+
+.media-feature:focus-visible,
+.media-card:focus-visible,
+.hub-link:focus-visible,
+.btn-shop:focus-visible { outline: 3px solid #9E1B32; outline-offset: 3px; }
+
+@media (max-width: 480px) {
+  .media-grid { grid-template-columns: 1fr; }
+  .hub-container { padding: 14px; }
+  .hub-header { margin-bottom: 14px; }
+  .media-card { min-height: 132px; padding: 15px; }
+  .media-feature { min-height: 154px; padding: 16px 64px 16px 16px; }
+  .media-note { margin-top: 18px; padding: 0 2px; }
+}
+
 .hub-footer {
   margin-top: auto;
   text-align: center;
