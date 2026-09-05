@@ -288,3 +288,26 @@ body, html {
   background: #FF8200;
   margin: 10px auto;
 }
+
+.play-basketball {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 450px;
+  box-sizing: border-box;
+  margin: -15px auto 30px;
+  padding: 17px 18px;
+  border: 1px solid #FF8200;
+  border-radius: 8px;
+  background: #17221b;
+  color: #FF8200;
+  font-family: Arial, sans-serif;
+  text-decoration: none;
+}
+.play-basketball span { font-size: 15px; font-weight: bold; }
+.play-basketball small { font-size: 11px; color: #d5ddd6; }
+.play-basketball:hover { background: #25352b; }
+.play-basketball:focus-visible { outline: 3px solid #FF8200; outline-offset: 4px; }

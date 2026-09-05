@@ -353,3 +353,26 @@ body {
   .media-feature { min-height: 154px; padding: 16px 64px 16px 16px; }
   .media-note { margin-top: 18px; padding: 0 2px; }
 }
+
+.play-basketball {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 450px;
+  box-sizing: border-box;
+  margin: -15px auto 30px;
+  padding: 17px 18px;
+  border: 1px solid #FA8B36;
+  border-radius: 8px;
+  background: #17221b;
+  color: #FA8B36;
+  font-family: Arial, sans-serif;
+  text-decoration: none;
+}
+.play-basketball span { font-size: 15px; font-weight: bold; }
+.play-basketball small { font-size: 11px; color: #d5ddd6; }
+.play-basketball:hover { background: #25352b; }
+.play-basketball:focus-visible { outline: 3px solid #FA8B36; outline-offset: 4px; }
