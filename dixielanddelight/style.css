@@ -116,6 +116,14 @@ body, html {
   gap: 8px;
 }
 
+.countdown-card[data-opener-date] .countdown-grid {
+  grid-template-columns: 1fr;
+}
+
+.countdown-grid strong {
+  grid-column: 1 / -1;
+}
+
 .countdown-grid div {
   background: #000;
   border: 1px solid #222;
