@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Five kicks. Your team's end zone. Play the Rocky Top Ventures Field Goal Challenge and chase your longest kick.">
+  <meta name="theme-color" content="#101714">
+  <title>Field Goal Challenge · Rocky Top Ventures</title>
+  <link rel="stylesheet" href="../basketball/style.css">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./game.js"></script>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="masthead"><a id="back-link" href="../rockytop/">← Back to Vol Nation</a><span>ROCKY TOP VENTURES <b>/ ARCADE</b></span></header>
+    <section class="game-heading">
+      <div><p class="eyebrow">SPLIT THE UPRIGHTS</p><h1>Field Goal Challenge<span>.</span></h1><p>Five kicks. Trust your foot. Go the distance.</p></div>
+      <span class="team-stamp" id="team-stamp">TENNESSEE</span>
+    </section>
+    <div class="game-layout">
+      <section class="court-panel" aria-label="Field goal game">
+        <div class="scoreboard">
+          <div><span>POINTS</span><strong id="score">00</strong></div>
+          <div><span>KICKS LEFT</span><strong id="kicks">5</strong></div>
+          <div><span>DISTANCE</span><strong><span class="stat-number" id="distance">20</span><small>YD</small></strong></div>
+          <div><span>LONGEST EVER</span><strong><span class="stat-number" id="best">—</span><small>YD</small></strong></div>
+        </div>
+        <div class="court-wrap">
+          <canvas id="field" width="600" height="660" tabindex="0" aria-label="Football field. Swipe upward from the football to kick, or use the aim and power controls.">Use the aim and power controls and the Kick button to play.</canvas>
+          <div class="field-hud"><span id="team-name">VOL NATION</span><span class="wind" id="wind">Wind: calm</span></div>
+          <div class="kick-call" id="kick-call" role="presentation" hidden><strong id="call-title"></strong><span id="call-detail"></span></div>
+          <div class="result" id="result" hidden><p class="eyebrow">FINAL WHISTLE</p><h2 id="result-title">Nice kicking.</h2><p id="result-score"></p><button id="play-again" type="button">Kick again ↗</button></div>
+        </div>
+        <div class="shot-status" id="status" role="status" aria-live="polite">Swipe up from the football to kick.</div>
+      </section>
+      <aside class="sideline">
+        <section class="controls" aria-labelledby="controls-title">
+          <p class="eyebrow">MAKE IT COUNT</p><h2 id="controls-title">Line it up.</h2>
+          <p>Swipe up from the football and release. Longer swipes add power. Aim a little into the wind.</p>
+          <p class="distance-note" id="distance-note">Your first kick: 20 yards. No wind.</p>
+          <div class="control-label"><label for="aim">Aim</label><output id="aim-value" for="aim">Center</output></div>
+          <input id="aim" type="range" min="-15" max="15" value="0" step="1">
+          <div class="range-hints"><span>← Left</span><span>Right →</span></div>
+          <div class="control-label"><label for="power">Power</label><output id="power-value" for="power">60%</output></div>
+          <input id="power" type="range" min="0" max="100" value="60" step="1">
+          <div class="range-hints"><span>Easy kick</span><span>Full power</span></div>
+          <button class="shoot-button" id="kick" type="button">Kick <span>↗</span></button>
+          <p class="keyboard-note">Keyboard: use the sliders, then press Enter on Kick. Space kicks when the field is focused.</p>
+          <button class="restart" id="restart" type="button">Start a new round</button>
+        </section>
+        <section class="rules"><p class="eyebrow">FIVE CHANCES AT GLORY</p><div><b>+3</b><p>Split the uprights and clear the crossbar.</p></div><div><b>+10</b><p>Yards farther after every make. Miss? Try that distance again.</p></div><p class="save-note" id="save-note">Your longest kick stays on this device. No account needed.</p></section>
+      </aside>
+    </div>
+    <footer>Built for the fans. Play for the bragging rights.<span>© Rocky Top Ventures</span></footer>
+    <noscript><p>Enable JavaScript to play Field Goal Challenge.</p></noscript>
+  </main>
+</body>
+</html>

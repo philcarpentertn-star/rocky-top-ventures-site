@@ -1,0 +1,13 @@
+.game-heading h1{font-size:clamp(30px,3.8vw,47px)}
+.court-wrap{background:#263d2b}
+.scoreboard strong .stat-number{display:inline;font-family:inherit;font-size:inherit;letter-spacing:inherit;color:inherit;margin:0}
+.scoreboard strong small{font:9px Arial,sans-serif;color:#a8b5a9;margin-left:3px}
+.field-hud{position:absolute;inset:16px 18px auto;display:flex;align-items:center;justify-content:space-between;gap:8px;pointer-events:none;font-size:9px;font-weight:bold;letter-spacing:1px;color:#fff6e8}
+.field-hud>span{background:#101c28cc;padding:9px 10px;border:1px solid #ccd8e525;border-radius:4px}
+.field-hud .wind{letter-spacing:.4px}
+.kick-call{position:absolute;left:50%;bottom:80px;transform:translateX(-50%);width:max-content;max-width:90%;padding:14px 26px;text-align:center;background:#132519ee;border:1px solid #e5eed15c;border-radius:7px;box-shadow:0 6px 24px #0004;pointer-events:none}
+.kick-call strong{display:block;color:#f8f3d9;font-size:30px;letter-spacing:1px}
+.kick-call span{display:block;color:#c6dac8;font-size:12px;margin-top:4px}
+.kick-call[data-outcome=good]{border-color:#a9e387;background:#173a25ee}
+.controls .distance-note{color:#f1ddbd!important;border-left:2px solid var(--accent);padding-left:10px;font-size:12px!important}
+@media(max-width:470px){.game-heading h1{font-size:33px;letter-spacing:-1.5px}.field-hud{inset:12px 10px auto;font-size:8px}.field-hud>span{padding:7px 8px}.kick-call{bottom:45px;padding:12px 20px}.kick-call strong{font-size:24px}}

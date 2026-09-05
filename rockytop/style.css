@@ -311,3 +311,5 @@ body, html {
 .play-basketball small { font-size: 11px; color: #d5ddd6; }
 .play-basketball:hover { background: #25352b; }
 .play-basketball:focus-visible { outline: 3px solid #FF8200; outline-offset: 4px; }
+
+.play-football { margin-top: -15px; }
