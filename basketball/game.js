@@ -6,7 +6,8 @@ const ctx = canvas.getContext('2d');
 const teams = {
   vols: { name: 'VOL NATION', color: '#ff8200', light: '#ffb765', floor: '#d96608', back: 'Vol Nation', path: 'rockytop', chant: 'Rocky Top!' },
   gators: { name: 'GATOR NATION', color: '#fa8b36', light: '#ffc18e', floor: '#244874', back: 'Gator Nation', path: 'gators', chant: 'Go Gators!' },
-  tide: { name: 'CRIMSON TIDE', color: '#9e1b32', light: '#ffc1ce', floor: '#8d1832', back: 'Crimson Tide', path: 'dixielanddelight', chant: 'Roll Tide!' }
+  tide: { name: 'CRIMSON TIDE', color: '#9e1b32', light: '#ffc1ce', floor: '#8d1832', back: 'Crimson Tide', path: 'dixielanddelight', chant: 'Roll Tide!' },
+  texas: { name: 'LONGHORN NATION', color: '#bf5700', light: '#ffbc85', floor: '#bf5700', back: 'Longhorn Nation', path: 'texas', chant: 'Hook ’em Horns!' }
 };
 let teamKey = new URLSearchParams(location.search).get('team');
 if (!Object.hasOwn(teams, teamKey)) teamKey = 'vols';
@@ -50,11 +51,11 @@ function reset() {
 }
 function applyTeam() {
   team = teams[teamKey];
-  $('team-stamp').textContent = teamKey === 'vols' ? 'TENNESSEE' : teamKey === 'gators' ? 'FLORIDA' : 'ALABAMA';
+  $('team-stamp').textContent = teamKey === 'vols' ? 'TENNESSEE' : teamKey === 'gators' ? 'FLORIDA' : teamKey === 'texas' ? 'TEXAS' : 'ALABAMA';
   document.documentElement.style.setProperty('--accent', team.color);
   document.documentElement.style.setProperty('--accent-light', team.light);
   document.documentElement.style.setProperty('--team-floor', team.floor);
-  document.documentElement.style.setProperty('--button-ink', teamKey === 'tide' ? '#ffffff' : '#141914');
+  document.documentElement.style.setProperty('--button-ink', (teamKey === 'tide' || teamKey === 'texas') ? '#ffffff' : '#141914');
   $('team-name').textContent = team.name;
   $('back-link').href = `../${team.path}/`;
   $('back-link').textContent = `← Back to ${team.back}`;

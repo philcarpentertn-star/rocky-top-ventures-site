@@ -6,7 +6,8 @@ const renderer = createRenderer(canvas);
 const teams = {
   vols: { key: 'vols', stamp: 'TENNESSEE', name: 'VOL NATION', accent: '#ff8200', light: '#ffb765', paint: '#ff8200', back: 'Vol Nation', path: 'rockytop', banner: 'ROCKY TOP · TENNESSEE', chant: 'Rocky Top!' },
   gators: { key: 'gators', stamp: 'FLORIDA', name: 'GATOR NATION', accent: '#fa8b36', light: '#ffc18e', paint: '#184ca0', endzone: 'GATORS', back: 'Gator Nation', path: 'gators', banner: 'WELCOME TO THE SWAMP', chant: 'Go Gators!' },
-  tide: { key: 'tide', stamp: 'ALABAMA', name: 'CRIMSON TIDE', accent: '#9e1b32', light: '#ffc1ce', paint: '#981b32', endzone: 'ALABAMA', back: 'Crimson Tide', path: 'dixielanddelight', banner: 'ROLL TIDE · ALABAMA', chant: 'Roll Tide!' }
+  tide: { key: 'tide', stamp: 'ALABAMA', name: 'CRIMSON TIDE', accent: '#9e1b32', light: '#ffc1ce', paint: '#981b32', endzone: 'ALABAMA', back: 'Crimson Tide', path: 'dixielanddelight', banner: 'ROLL TIDE · ALABAMA', chant: 'Roll Tide!' },
+  texas: { key: 'texas', stamp: 'TEXAS', name: 'LONGHORN NATION', accent: '#bf5700', light: '#ffbc85', paint: '#bf5700', endzone: 'TEXAS', back: 'Longhorn Nation', path: 'texas', banner: 'HOOK ’EM HORNS · TEXAS', chant: 'Hook ’em Horns!' }
 };
 const key = new URLSearchParams(location.search).get('team');
 const team = Object.hasOwn(teams, key) ? teams[key] : teams.vols;
@@ -116,7 +117,7 @@ $('kick').addEventListener('click', kick); $('restart').addEventListener('click'
 $('play-again').addEventListener('click', () => { reset(); canvas.focus({ preventScroll: true }); });
 $('aim').addEventListener('input', controls); $('power').addEventListener('input', controls);
 document.documentElement.style.setProperty('--accent', team.accent); document.documentElement.style.setProperty('--accent-light', team.light);
-document.documentElement.style.setProperty('--button-ink', team.key === 'tide' ? '#fff' : '#141914');
+document.documentElement.style.setProperty('--button-ink', (team.key === 'tide' || team.key === 'texas') ? '#fff' : '#141914');
 $('team-stamp').textContent = team.stamp; $('team-name').textContent = team.name;
 $('back-link').href = `../${team.path}/`; $('back-link').textContent = `← Back to ${team.back}`;
 reset(); requestAnimationFrame(animate);
