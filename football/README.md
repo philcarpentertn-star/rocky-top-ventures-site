@@ -1,6 +1,10 @@
 # Field Goal Challenge
 
-Static five-kick game for the existing site, with separate Tennessee, Alabama and Florida themes. Team links use `?team=vols`, `?team=tide` or `?team=gators`. An absent or invalid team defaults to Tennessee.
+Updated to Arcade v3: flick-speed input, changing wind and a shared Netlify leaderboard.
+See [Arcade v3 documentation](../arcade/README.md) for current hosting and verification.
+The original layout and field reference notes below are retained for context.
+
+Five-kick game for the existing site, with Tennessee, Alabama, Florida and Texas themes. Team links use `?team=vols`, `?team=tide` or `?team=gators`. An absent or invalid team defaults to Tennessee.
 
 Each make scores three points and moves the next attempt ten yards back, starting at 20 yards. A miss repeats the distance. The longest successful kick is saved separately for each team on the device. Browser-storage errors do not prevent play.
 
@@ -32,4 +36,4 @@ Physics checks cover makes, short and wide misses, crossbar and upright contact,
 
 Browser checks cover five-kick rounds, keyboard kicks, swipe input at a phone-sized viewport, replay, persistence after reload, team navigation and horizontal overflow. Physical-phone testing remains a user preview step before publishing.
 
-The game reuses `../basketball/style.css` and has no third-party runtime dependencies. Keep all five files in `football/` together with that shared stylesheet when deploying.
+The game reuses `../basketball/style.css`; shared scores use the backend dependencies listed in package.json. Use the root build command to include the shared arcade modules and both games when deploying.

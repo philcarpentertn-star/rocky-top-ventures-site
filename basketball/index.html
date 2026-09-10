@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#101714">
   <title>Hoops Challenge · Rocky Top Ventures</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./game.js"></script>
+  <script type="module" src="./game.js?v=outdoor-arcade-3"></script>
 </head>
 <body>
   <main class="game-shell">
@@ -16,7 +16,7 @@
       <span>ROCKY TOP VENTURES <b>/ ARCADE</b></span>
     </header>
     <section class="game-heading">
-      <div><p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p><h1>Hoops Challenge<span>.</span></h1><p>Ten shots. Find your rhythm. Own the court.</p></div>
+      <div><p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p><h1>Hoops Challenge<span>.</span></h1><p>Outdoor court. Around the arc. Read the wind.</p></div>
       <span class="team-stamp" id="team-stamp">TENNESSEE</span>
     </section>
     <div class="game-layout">
@@ -29,9 +29,9 @@
         </div>
         <div class="court-wrap">
           <canvas id="court" width="600" height="660" tabindex="0" aria-label="Basketball court. Swipe upward from the ball to shoot, or use the aim and power controls below.">Use the aim and power controls and the Shoot button to play.</canvas>
-          <div class="court-badge"><span id="team-name">VOL NATION</span><span>10-SHOT CHALLENGE</span></div>
+          <div class="court-badge"><span id="team-name">VOL NATION</span><span id="wind">Reading the wind…</span></div>
           <div class="result" id="result" hidden>
-            <p class="eyebrow">THAT’S A WRAP</p><h2 id="result-title">Nice round.</h2><p id="result-score"></p><button id="play-again" type="button">Play again ↗</button>
+            <p class="eyebrow">THAT’S A WRAP</p><h2 id="result-title">Nice round.</h2><p id="result-score"></p><a class="post-score-link" href="#leaderboard">See leaderboard &amp; post score ↓</a><button id="play-again" type="button">Play again ↗</button>
           </div>
         </div>
         <div class="shot-status" id="status" role="status" aria-live="polite">Swipe up from the ball, or set your shot below.</div>
@@ -39,9 +39,9 @@
       <aside class="sideline">
         <section class="controls" aria-labelledby="controls-title">
           <p class="eyebrow">YOUR NEXT BUCKET</p><h2 id="controls-title">Line it up.</h2>
-          <p>Drag the ball upward and release. A longer swipe adds power; angle your swipe toward the hoop.</p>
+          <p>Flick upward from the ball. Longer, faster flicks add power. Aim into the wind: it changes after every shot and gets stronger as you go.</p>
           <div class="control-label"><label for="aim">Aim</label><output id="aim-value" for="aim">Center</output></div>
-          <input id="aim" type="range" min="-30" max="30" value="0" step="1">
+          <input id="aim" type="range" min="-40" max="40" value="0" step="0.5">
           <div class="range-hints"><span>← Left</span><span>Right →</span></div>
           <div class="control-label"><label for="power">Power</label><output id="power-value" for="power">72%</output></div>
           <input id="power" type="range" min="0" max="100" value="72" step="1">
@@ -53,6 +53,18 @@
         <section class="rules"><p class="eyebrow">MAKE EVERY SHOT COUNT</p><div><b>02</b><p>Points for every bucket.</p></div><div><b>+1</b><p>Bonus on your third consecutive make and every make after it.</p></div><p class="save-note" id="save-note">Your best stays on this device. No account needed.</p></section>
       </aside>
     </div>
+
+    <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-title">
+      <div class="leaderboard-heading"><div><p class="eyebrow">BRAGGING RIGHTS</p><h2 id="leaderboard-title">Fan leaderboard</h2></div><button type="button" data-board-refresh>Refresh scores</button></div>
+      <p data-board-status role="status">Loading shared scores…</p>
+      <p data-board-empty hidden>No scores yet. Be the first fan on the board!</p>
+      <div class="leaderboard-table"><table><caption class="sr-only">Top 20 basketball scores across all teams</caption><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Score</th></tr></thead><tbody></tbody></table></div>
+      <form hidden>
+        <label for="player-name">Public nickname</label>
+        <p id="nickname-help">Use 2–16 letters or numbers. Spaces, hyphens and underscores are welcome. Please keep it friendly.</p>
+        <div class="leaderboard-entry"><input id="player-name" name="nickname" type="text" minlength="2" maxlength="16" pattern="[A-Za-z0-9][A-Za-z0-9 _\-]{1,15}" aria-describedby="nickname-help" autocomplete="off" required><button type="submit">Post my score</button></div>
+      </form>
+    </section>
     <footer>Built for the fans. Play for the bragging rights.<span>© Rocky Top Ventures</span></footer>
     <noscript><p>Enable JavaScript to play Hoops Challenge.</p></noscript>
   </main>

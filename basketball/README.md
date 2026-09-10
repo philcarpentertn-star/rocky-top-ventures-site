@@ -1,6 +1,10 @@
 # Hoops Challenge
 
-Static HTML/CSS/JavaScript game for the existing site hosting. No server or external dependencies are needed in production.
+Updated to Arcade v3: flick-speed input, changing wind and a shared Netlify leaderboard.
+See [Arcade v3 documentation](../arcade/README.md) for current hosting and verification.
+The original layout and field reference notes below are retained for context.
+
+HTML/CSS/JavaScript game for the existing site hosting. Practice works without a server; shared scores use the Netlify function.
 
 Each team hub links to the matching theme:
 - `/basketball/?team=vols`

@@ -1,4 +1,6 @@
-import { WINDS, clamp, launchKick, stepKick, nextDistance } from './physics.js';
+import { flickInput, windLabel } from '../arcade/challenge.js';
+import { leaderboard } from '../arcade/leaderboard.js';
+import { KICK_SPOTS, launchKick, stepKick, nextDistance } from './physics.js';
 import { createRenderer, BALL_ORIGIN } from './renderer.js';
 const $ = id => document.getElementById(id);
 const canvas = $('field');
@@ -13,12 +15,16 @@ const key = new URLSearchParams(location.search).get('team');
 const team = Object.hasOwn(teams, key) ? teams[key] : teams.vols;
 let distance = 20, kicks = 0, score = 0, made = 0, longest = 0, best = 0, ball = null, drag = null;
 let result = null, trail = [], lastFrame = 0, accumulator = 0, storageAvailable = true;
+let ready = false, winds = [];
+const board = leaderboard('football', team.key);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const storageKey = `rtv-field-goal-best-${team.key}`;
+const storageKey = `rtv-field-goal-v3-best-${team.key}`;
 try { const stored = Number(localStorage.getItem(storageKey)); best = [20,30,40,50,60].includes(stored) ? stored : 0; }
 catch { storageAvailable = false; }
-const wind = () => WINDS[Math.min(kicks, 4)];
-const windText = n => n === 0 ? 'Wind: calm' : `Wind: ${n < 0 ? '←' : '→'} ${Math.abs(n)} mph`;
+const spot = () => KICK_SPOTS[Math.min(kicks, 4)];
+const spotLabel = x => x < 0 ? 'Left hash' : x > 0 ? 'Right hash' : 'Center';
+const wind = () => winds[Math.min(kicks, 4)] || 0;
+const windText = windLabel;
 function controls() {
   const value = Number($('aim').value);
   $('aim-value').textContent = value === 0 ? 'Center' : `${Math.abs(value)}° ${value < 0 ? 'left' : 'right'}`;
@@ -27,10 +33,10 @@ function controls() {
 function sync() {
   $('score').textContent = String(score).padStart(2, '0'); $('kicks').textContent = 5 - kicks;
   $('distance').textContent = distance; $('best').textContent = best || '—';
-  const locked = Boolean(ball) || kicks >= 5;
+  const locked = !ready || Boolean(ball) || kicks >= 5;
   for (const id of ['kick','aim','power']) $(id).disabled = locked;
-  $('wind').textContent = windText(ball ? ball.wind : wind());
-  $('distance-note').textContent = `${distance}-yard kick. ${windText(ball ? ball.wind : wind()).replace('Wind: ', '')}.`;
+  $('wind').textContent = ready ? windText(ball ? ball.wind : wind()) : 'Reading the wind…';
+  $('distance-note').textContent = `${distance}-yard kick · ${spotLabel(ball ? ball.startX : spot())}. ${windText(ball ? ball.wind : wind()).replace('Wind: ', '')}.`;
   $('save-note').textContent = storageAvailable ? 'Your longest kick stays on this device. No account needed.' : 'Storage is unavailable. Your longest kick lasts for this visit.';
 }
 function saveBest() {
@@ -38,14 +44,19 @@ function saveBest() {
   best = longest;
   try { localStorage.setItem(storageKey, String(best)); } catch { storageAvailable = false; }
 }
-function reset() {
+async function reset() {
+  ready = false;
   distance = 20; kicks = 0; score = 0; made = 0; longest = 0; ball = null; drag = null; result = null; trail = [];
   $('aim').value = 0; $('power').value = 60; $('result').hidden = true; $('kick-call').hidden = true;
   $('status').textContent = 'Swipe up from the football to kick.'; controls(); sync();
+  const next = await board.start();
+  if (!next) return;
+  winds = next; ready = true; sync();
 }
 function kick() {
-  if (ball || kicks >= 5) return;
-  ball = launchKick(distance, Number($('aim').value), Number($('power').value), wind());
+  if (!ready || ball || kicks >= 5) return;
+  ball = launchKick(distance, Number($('aim').value), Number($('power').value), wind(), spot());
+  board.record(Number($('aim').value), Number($('power').value));
   kicks++; result = null; trail = []; drag = null; $('kick-call').hidden = true;
   $('status').textContent = `${distance}-yard kick is away…`; sync();
 }
@@ -65,6 +76,7 @@ function finish() {
   if (kicks >= 5) {
     $('result-title').textContent = made === 5 ? 'Perfect from five.' : made >= 3 ? 'What a leg.' : 'Keep kicking.';
     $('result-score').textContent = `${score} points · ${made} of 5 made\nLongest this round: ${longest ? `${longest} yards` : '—'}\n${team.chant}`;
+    board.finish();
     $('result').hidden = false; $('kick-call').hidden = true;
     $('status').textContent = `Round complete: ${score} points. ${made} of 5 made. Longest kick: ${longest} yards.`;
     $('play-again').focus({ preventScroll: true });
@@ -86,27 +98,27 @@ function animate(time) {
     if (outcome.event) resolve(outcome.event);
     if (outcome.finished) finish();
   }
-  renderer.draw({ distance, team, ball, trail: reducedMotion ? [] : trail, drag, aim: Number($('aim').value), result, complete: kicks >= 5 && !ball });
+  renderer.draw({ distance, startX: ball ? ball.startX : spot(), team, ball, trail: reducedMotion ? [] : trail, drag, aim: Number($('aim').value), result, complete: kicks >= 5 && !ball });
   requestAnimationFrame(animate);
 }
 function point(event) {
   const rect = canvas.getBoundingClientRect(); const scale = Math.min(rect.width / 600, rect.height / 660);
   return { x: (event.clientX - rect.left - (rect.width - 600 * scale) / 2) / scale, y: (event.clientY - rect.top - (rect.height - 660 * scale) / 2) / scale };
 }
-function swipe(p) {
-  $('aim').value = Math.round(clamp((p.x - drag.x) / 5, -15, 15));
-  $('power').value = Math.round(clamp((drag.y - p.y) / 2.4, 0, 100)); controls();
+function swipe(p, time) {
+  const input = flickInput(p.x - drag.x, drag.y - p.y, time - drag.started, 'football');
+  $('aim').value = input.aim; $('power').value = input.power; controls();
 }
 canvas.addEventListener('pointerdown', event => {
-  if (ball || kicks >= 5 || drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
+  if (!ready || ball || kicks >= 5 || drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
   const p = point(event);
   if (Math.hypot(p.x - BALL_ORIGIN.x, p.y - BALL_ORIGIN.y) > 60) return;
-  drag = { ...p, id: event.pointerId }; canvas.setPointerCapture(event.pointerId); canvas.focus({ preventScroll: true });
+  drag = { ...p, id: event.pointerId, started: event.timeStamp }; canvas.setPointerCapture(event.pointerId); canvas.focus({ preventScroll: true });
 });
-canvas.addEventListener('pointermove', event => { if (drag && event.pointerId === drag.id) swipe(point(event)); });
+canvas.addEventListener('pointermove', event => { if (drag && event.pointerId === drag.id) swipe(point(event), event.timeStamp); });
 canvas.addEventListener('pointerup', event => {
   if (!drag || event.pointerId !== drag.id) return;
-  const p = point(event); const dy = drag.y - p.y; swipe(p); drag = null;
+  const p = point(event); const dy = drag.y - p.y; swipe(p, event.timeStamp); drag = null;
   if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   if (dy >= 25) kick(); else $('status').textContent = 'Swipe upward from the football. A longer swipe adds power.';
 });

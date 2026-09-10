@@ -2,16 +2,16 @@
 export const FIELD_WIDTH = 160 / 3;
 export const GOAL = { halfWidth: 18.5 / 6, crossbar: 10 / 3, top: 13.33, ballRadius: 0.14 };
 export const CHECKERBOARD = { rows: 4, columns: 30, square: 5 / 3, border: 5 / 3 };
+export const KICK_SPOTS = [-6.67, 6.67, 0, -6.67, 6.67];
 export const GRAVITY = 9.81 / 0.9144;
-export const WINDS = [0, 3, -4, 5, -6];
 export const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 export const nextDistance = (distance, made) => made ? Math.min(distance + 10, 60) : distance;
 
-export function launchKick(distance, aim, power, wind) {
+export function launchKick(distance, aim, power, wind, startX = 0) {
   const speed = 9 + clamp(power, 0, 100) * 0.25;
-  const direction = clamp(aim, -15, 15) * Math.PI / 180;
+  const direction = clamp(aim, -25, 25) * Math.PI / 180;
   const elevation = 37 * Math.PI / 180;
-  return { x: 0, z: 0, h: 0.35, vx: Math.sin(direction) * Math.cos(elevation) * speed,
+  return { x: startX, startX, z: 0, h: 0.35, vx: Math.sin(direction) * Math.cos(elevation) * speed,
     vz: Math.cos(direction) * Math.cos(elevation) * speed, vh: Math.sin(elevation) * speed,
     wind, distance, age: 0, resolved: false, outcome: null, afterResult: 0 };
 }
@@ -28,7 +28,7 @@ export function classifyCrossing(x, height) {
 
 export function stepKick(ball, dt) {
   const previous = { x: ball.x, z: ball.z, h: ball.h };
-  const acceleration = ball.wind * 0.2;
+  const acceleration = ball.wind * 0.35;
   ball.age += dt;
   ball.x += ball.vx * dt + 0.5 * acceleration * dt * dt;
   ball.vx += acceleration * dt;

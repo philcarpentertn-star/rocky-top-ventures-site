@@ -1,11 +1,13 @@
 export const GRAVITY = 1600;
 export const HOOP = { x: 300, y: 210, halfWidth: 44 };
 export const START_Y = 570;
-export const STARTS = [300, 220, 380, 170, 430, 250, 350, 200, 400, 300];
+export const STARTS = [300, 180, 420, 100, 500, 240, 360, 140, 460, 300];
+// Ball sits just above the painted three-point arc at each shooting spot.
+export const shotY = x => 304 + 298 * Math.sqrt(1 - ((x - 300) / 248) ** 2) - 30;
 export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-export function launch(x, aim, power) {
-  return { x, y: START_Y, vx: clamp(aim, -30, 30) * 6,
+export function launch(x, aim, power, wind = 0) {
+  return { x, y: shotY(x), wind, vx: clamp(aim, -40, 40) * 6,
     vy: -(800 + clamp(power, 0, 100) * 5), resolved: false, made: false, age: 0, phase: 'flight', phaseAge: 0 };
 }
 
@@ -33,7 +35,9 @@ export function stepShot(ball, dt) {
     return { event: null, finished: ball.phaseAge > 1.15 };
   }
   const previous = { x: ball.x, y: ball.y };
-  ball.x += ball.vx * dt;
+  const acceleration = (ball.wind || 0) * 18;
+  ball.x += ball.vx * dt + 0.5 * acceleration * dt * dt;
+  ball.vx += acceleration * dt;
   ball.y += ball.vy * dt + 0.5 * GRAVITY * dt * dt;
   ball.vy += GRAVITY * dt;
   let event = null;

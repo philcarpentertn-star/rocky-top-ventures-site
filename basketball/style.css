@@ -5,3 +5,19 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 
 .team-stamp{color:var(--accent-light);border:1px solid var(--accent);border-radius:4px;font-size:11px;font-weight:bold;letter-spacing:2px;padding:12px 16px;margin-bottom:3px}
+
+/* Shared leaderboard and wind readout. */
+.court-badge #wind{font-size:14px;color:#fff4d8;letter-spacing:0;background:#14211de8;padding:7px 10px;border-radius:5px}
+.leaderboard{margin-top:24px;border:1px solid var(--line);border-radius:10px;background:#1b251f;padding:24px}
+.leaderboard-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.leaderboard p{font-size:14px;line-height:1.5;color:#c5d0c6}
+.leaderboard button{background:var(--accent);color:var(--button-ink,#141914);border:0;border-radius:6px;padding:12px 16px;font-weight:bold;font-size:14px;min-height:44px}
+.leaderboard-table{overflow-x:auto}.leaderboard table{width:100%;border-collapse:collapse;text-align:left;font-size:14px}
+.leaderboard th,.leaderboard td{padding:14px 8px;border-bottom:1px solid var(--line)}.leaderboard th{color:var(--accent-light)}
+.leaderboard td:last-child{white-space:nowrap}.leaderboard form{margin-top:24px}.leaderboard label{font-weight:bold}
+.leaderboard-entry{display:flex;gap:12px;flex-wrap:wrap}.leaderboard input{min-width:0;flex:1;background:#101714;border:1px solid #718077;color:white;padding:12px;border-radius:6px;font-size:16px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:470px){.leaderboard{padding:16px}.leaderboard th,.leaderboard td{padding:12px 5px}.court-badge{align-items:start}.court-badge #wind{font-size:12px}.leaderboard-entry button{width:100%}}
+
+.post-score-link{color:var(--accent-light);font-size:16px;text-decoration:underline;padding:10px;line-height:1.4}
+.result{overflow-y:auto}

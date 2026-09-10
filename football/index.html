@@ -14,7 +14,7 @@
   <main class="game-shell">
     <header class="masthead"><a id="back-link" href="../rockytop/">← Back to Vol Nation</a><span>ROCKY TOP VENTURES <b>/ ARCADE</b></span></header>
     <section class="game-heading">
-      <div><p class="eyebrow">SPLIT THE UPRIGHTS</p><h1>Field Goal Challenge<span>.</span></h1><p>Five kicks. Trust your foot. Go the distance.</p></div>
+      <div><p class="eyebrow">SPLIT THE UPRIGHTS</p><h1>Field Goal Challenge<span>.</span></h1><p>Five flicks. Changing wind. One shot at glory.</p></div>
       <span class="team-stamp" id="team-stamp">TENNESSEE</span>
     </section>
     <div class="game-layout">
@@ -29,17 +29,17 @@
           <canvas id="field" width="600" height="660" tabindex="0" aria-label="Football field. Swipe upward from the football to kick, or use the aim and power controls.">Use the aim and power controls and the Kick button to play.</canvas>
           <div class="field-hud"><span id="team-name">VOL NATION</span><span class="wind" id="wind">Wind: calm</span></div>
           <div class="kick-call" id="kick-call" role="presentation" hidden><strong id="call-title"></strong><span id="call-detail"></span></div>
-          <div class="result" id="result" hidden><p class="eyebrow">FINAL WHISTLE</p><h2 id="result-title">Nice kicking.</h2><p id="result-score"></p><button id="play-again" type="button">Kick again ↗</button></div>
+          <div class="result" id="result" hidden><p class="eyebrow">FINAL WHISTLE</p><h2 id="result-title">Nice kicking.</h2><p id="result-score"></p><a class="post-score-link" href="#leaderboard">See leaderboard &amp; post score ↓</a><button id="play-again" type="button">Kick again ↗</button></div>
         </div>
         <div class="shot-status" id="status" role="status" aria-live="polite">Swipe up from the football to kick.</div>
       </section>
       <aside class="sideline">
         <section class="controls" aria-labelledby="controls-title">
           <p class="eyebrow">MAKE IT COUNT</p><h2 id="controls-title">Line it up.</h2>
-          <p>Swipe up from the football and release. Longer swipes add power. Aim a little into the wind.</p>
-          <p class="distance-note" id="distance-note">Your first kick: 20 yards. No wind.</p>
+          <p>Flick upward from the football. Longer, faster flicks add power. Kick from the left hash, right hash and center. Aim toward the posts and into the wind.</p>
+          <p class="distance-note" id="distance-note">Your first kick: 20 yards. Read the wind before you flick.</p>
           <div class="control-label"><label for="aim">Aim</label><output id="aim-value" for="aim">Center</output></div>
-          <input id="aim" type="range" min="-15" max="15" value="0" step="1">
+          <input id="aim" type="range" min="-25" max="25" value="0" step="0.5">
           <div class="range-hints"><span>← Left</span><span>Right →</span></div>
           <div class="control-label"><label for="power">Power</label><output id="power-value" for="power">60%</output></div>
           <input id="power" type="range" min="0" max="100" value="60" step="1">
@@ -51,6 +51,18 @@
         <section class="rules"><p class="eyebrow">FIVE CHANCES AT GLORY</p><div><b>+3</b><p>Split the uprights and clear the crossbar.</p></div><div><b>+10</b><p>Yards farther after every make. Miss? Try that distance again.</p></div><p class="save-note" id="save-note">Your longest kick stays on this device. No account needed.</p></section>
       </aside>
     </div>
+
+    <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-title">
+      <div class="leaderboard-heading"><div><p class="eyebrow">BRAGGING RIGHTS</p><h2 id="leaderboard-title">Fan leaderboard</h2></div><button type="button" data-board-refresh>Refresh scores</button></div>
+      <p data-board-status role="status">Loading shared scores…</p>
+      <p data-board-empty hidden>No scores yet. Be the first fan on the board!</p>
+      <div class="leaderboard-table"><table><caption class="sr-only">Top 20 football scores across all teams</caption><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Team</th><th scope="col">Score</th></tr></thead><tbody></tbody></table></div>
+      <form hidden>
+        <label for="player-name">Public nickname</label>
+        <p id="nickname-help">Use 2–16 letters or numbers. Spaces, hyphens and underscores are welcome. Please keep it friendly.</p>
+        <div class="leaderboard-entry"><input id="player-name" name="nickname" type="text" minlength="2" maxlength="16" pattern="[A-Za-z0-9][A-Za-z0-9 _\-]{1,15}" aria-describedby="nickname-help" autocomplete="off" required><button type="submit">Post my score</button></div>
+      </form>
+    </section>
     <footer>Built for the fans. Play for the bragging rights.<span>© Rocky Top Ventures</span></footer>
     <noscript><p>Enable JavaScript to play Field Goal Challenge.</p></noscript>
   </main>

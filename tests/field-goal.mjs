@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CHECKERBOARD, FIELD_WIDTH, GOAL, launchKick, stepKick, classifyCrossing, nextDistance } from '../football/physics.js';
+import { KICK_SPOTS, CHECKERBOARD, FIELD_WIDTH, GOAL, launchKick, stepKick, classifyCrossing, nextDistance } from '../football/physics.js';
 function simulate(distance, aim, power, wind = 0, dt = 1 / 120) {
   const ball = launchKick(distance, aim, power, wind), events = [];
   for (let i = 0; i < 2400; i++) {
@@ -30,3 +30,20 @@ assert.equal(CHECKERBOARD.rows * CHECKERBOARD.columns, 120);
 assert(Math.abs(CHECKERBOARD.columns * CHECKERBOARD.square + 2 * CHECKERBOARD.border - FIELD_WIDTH) < .00001);
 assert.equal(CHECKERBOARD.rows * CHECKERBOARD.square + 2 * CHECKERBOARD.border, 10);
 console.log('Passed: makes, misses, crossbar and upright checks, every distance, wind compensation, frame steps, progression, and Neyland checkerboard dimensions.');
+
+// Side-on kicks remain solvable even after misses repeat a short distance in strong wind.
+for (const startX of KICK_SPOTS) {
+  assert.equal(launchKick(30, 0, 95, 0, startX).x, startX);
+  for (const distance of [20, 30, 40, 50, 60]) {
+    for (const wind of [-14, 14]) {
+      let makeable = false;
+      for (let aim = -25; aim <= 25; aim += .5) {
+        const ball = launchKick(distance, aim, 95, wind, startX);
+        for (let i = 0; i < 1200 && !ball.resolved; i++) stepKick(ball, 1 / 120);
+        if (ball.outcome === 'good') { makeable = true; break; }
+      }
+      assert(makeable, `Kick from ${startX}, distance ${distance}, wind ${wind} is makeable`);
+    }
+  }
+}
+console.log('Passed: both hash marks at every distance, including strong crosswinds after misses.');

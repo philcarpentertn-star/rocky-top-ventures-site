@@ -1,4 +1,6 @@
-import { HOOP, START_Y, STARTS, clamp, launch, stepShot, pointsForMake } from './physics.js';
+import { flickInput, windLabel } from '../arcade/challenge.js';
+import { leaderboard } from '../arcade/leaderboard.js';
+import { HOOP, shotY, STARTS, clamp, launch, stepShot, pointsForMake } from './physics.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('court');
@@ -15,25 +17,28 @@ let team = teams[teamKey];
 let score = 0, shots = 0, streak = 0, made = 0, best = 0;
 let ball = null, drag = null, feedback = '', flash = 0, frame = 0, accumulator = 0;
 let storageAvailable = true;
+let ready = false, winds = [];
+const board = leaderboard('basketball', teamKey);
 
 function loadBest() {
   try {
-    const stored = Number(localStorage.getItem(`rtv-hoops-best-${teamKey}`));
+    const stored = Number(localStorage.getItem(`rtv-hoops-v3-best-${teamKey}`));
     best = Number.isInteger(stored) && stored >= 0 && stored <= 28 ? stored : 0;
   } catch { storageAvailable = false; best = 0; }
 }
 function saveBest() {
   if (score <= best) return;
   best = score;
-  try { localStorage.setItem(`rtv-hoops-best-${teamKey}`, String(best)); }
+  try { localStorage.setItem(`rtv-hoops-v3-best-${teamKey}`, String(best)); }
   catch { storageAvailable = false; }
 }
 function sync() {
+  $('wind').textContent = ready ? windLabel(ball ? ball.wind : winds[Math.min(shots, 9)]) : 'Reading the wind…';
   $('score').textContent = String(score).padStart(2, '0');
   $('shots').textContent = 10 - shots;
   $('streak').textContent = streak;
   $('best').textContent = String(best).padStart(2, '0');
-  const locked = Boolean(ball) || shots >= 10;
+  const locked = !ready || Boolean(ball) || shots >= 10;
   for (const id of ['shoot', 'aim', 'power']) $(id).disabled = locked;
   $('save-note').textContent = storageAvailable ? 'Your best stays on this device. No account needed.' : 'Storage is unavailable. Your best lasts for this visit.';
 }
@@ -42,12 +47,16 @@ function updateControls() {
   $('aim-value').textContent = aim === 0 ? 'Center' : `${Math.abs(aim)} ${aim < 0 ? 'left' : 'right'}`;
   $('power-value').textContent = `${$('power').value}%`;
 }
-function reset() {
+async function reset() {
+  ready = false;
   score = 0; shots = 0; streak = 0; made = 0; ball = null; drag = null; feedback = ''; flash = 0;
   $('result').hidden = true;
   $('aim').value = 0; $('power').value = 72;
   $('status').textContent = 'Swipe up from the ball, or set your shot below.';
   updateControls(); sync();
+  const next = await board.start();
+  if (!next) return;
+  winds = next; ready = true; sync();
 }
 function applyTeam() {
   team = teams[teamKey];
@@ -62,8 +71,9 @@ function applyTeam() {
   loadBest(); reset();
 }
 function shoot() {
-  if (ball || shots >= 10) return;
-  ball = launch(STARTS[shots], Number($('aim').value), Number($('power').value));
+  if (!ready || ball || shots >= 10) return;
+  ball = launch(STARTS[shots], Number($('aim').value), Number($('power').value), winds[shots]);
+  board.record(Number($('aim').value), Number($('power').value));
   shots++; feedback = ''; drag = null;
   $('status').textContent = 'Shot away…';
   sync();
@@ -79,6 +89,7 @@ function finishShot() {
     $('result-title').textContent = made >= 8 ? 'Lights out.' : made >= 4 ? 'Finding your rhythm.' : 'Keep shooting.';
     $('result-score').textContent = `${score} points · ${made} of 10 made\n${team.chant}`;
     $('result').hidden = false;
+    board.finish();
     $('status').textContent = `Round complete: ${score} points, ${made} of 10 made. Personal best: ${best}.`;
     $('play-again').focus({ preventScroll: true });
   } else {
@@ -116,8 +127,8 @@ function drawNet(front) {
   const progress = inNet ? clamp(ball.phaseAge / .58, 0, 1) : 0;
   const stretch = inNet ? Math.sin(progress * Math.PI) * 16 : flash * 5 * Math.sin(flash * 20);
   const sway = inNet ? (ball.x - HOOP.x) * .25 : Math.sin(flash * 14) * flash * 3;
-  ctx.strokeStyle = front ? '#f7f3e6df' : '#a4b4b88a';
-  ctx.lineWidth = front ? 1.45 : 1;
+  ctx.strokeStyle = front ? '#ffffff' : '#71929aaa';
+  ctx.lineWidth = front ? 2 : 1;
   // Crossing strands form real diamond-shaped openings; the front mesh covers the ball.
   for (let col = 0; col <= 8; col++) {
     for (const direction of [-1, 1]) {
@@ -136,45 +147,41 @@ function drawNet(front) {
   ellipse(300 + sway, 264 + stretch, 25, 4, front ? '#fff7e3bb' : '#a4b4b866', false, 1.3);
 }
 function drawRim(front) {
-  ctx.beginPath(); ctx.ellipse(300, 210, 44, 12, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
+  ctx.beginPath(); ctx.ellipse(300, 210, 44, 18, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
   ctx.strokeStyle = '#773016'; ctx.lineWidth = 8; ctx.stroke();
   ctx.strokeStyle = '#f77828'; ctx.lineWidth = 5; ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(300, 208.5, 44, 12, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
+  ctx.beginPath(); ctx.ellipse(300, 208.5, 44, 18, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
   ctx.strokeStyle = '#ffc184'; ctx.lineWidth = 1.5; ctx.stroke();
 }
 function draw() {
   ctx.clearRect(0, 0, 600, 660);
-  const wall = ctx.createLinearGradient(0, 0, 0, 300);
-  wall.addColorStop(0, '#111923'); wall.addColorStop(1, '#34404a');
-  ctx.fillStyle = wall; ctx.fillRect(0, 0, 600, 660);
-  const spotlight = ctx.createRadialGradient(300, 120, 30, 300, 120, 330);
-  spotlight.addColorStop(0, '#e4ebed18'); spotlight.addColorStop(1, '#ffffff00');
-  ctx.fillStyle = spotlight; ctx.fillRect(0, 0, 600, 300);
-  for (let x = 0; x < 600; x += 60) {
-    ctx.fillStyle = '#101820'; ctx.fillRect(x + 2, 245, 56, 47);
-    path([[x + 5, 247], [x + 54, 247]], '#65758155', 1);
-  }
-  const wood = ctx.createLinearGradient(0, 290, 0, 660);
-  wood.addColorStop(0, '#ad7c47'); wood.addColorStop(.5, '#cba16a'); wood.addColorStop(1, '#dfbb80');
-  ctx.fillStyle = wood; ctx.fillRect(0, 292, 600, 368);
-  // Hardwood planks converge toward the basket to establish court depth.
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 292, 600, 368); ctx.clip();
-  for (let i = -14; i < 22; i++) {
-    const topX = i * 23;
-    const bottomX = 300 + (topX - 300) * 2.8;
-    path([[topX, 292], [topX + 23, 292], [bottomX + 64.4, 660], [bottomX, 660]], i % 3 === 0 ? '#673c1814' : '#fff0c20c', 1, true, true);
-    path([[topX, 292], [bottomX, 660]], '#63351235', .7);
-    for (let j = 0; j < 4; j++) {
-      const y = 330 + j * 97 + (i % 3) * 21;
-      const t = (y - 292) / 368;
-      const x = topX + (bottomX - topX) * t;
-      path([[x, y], [x + 23 + t * 41.4, y]], '#70411b35', .6);
-    }
-    for (let grain = 1; grain < 4; grain++) {
-      path([[topX + grain * 5, 292], [bottomX + grain * 14, 660]], '#70431c12', .5);
-    }
+  // Fixed camera keeps the rim in the same place throughout every shot.
+  ctx.save();
+  const sky = ctx.createLinearGradient(0, 0, 0, 290);
+  sky.addColorStop(0, '#258fce'); sky.addColorStop(1, '#c5ecff');
+  ctx.fillStyle = sky; ctx.fillRect(-300, -200, 1200, 860);
+  // Daylight above the park court makes its open-air setting visible at phone size.
+  ellipse(515, 90, 27, 27, '#fff1ac', true);
+  ellipse(70, 113, 43, 12, '#ffffffbb', true);
+  ellipse(99, 106, 28, 17, '#ffffffbb', true);
+  ellipse(124, 115, 34, 10, '#ffffffbb', true);
+  // Open-air court: grass beyond the baseline and a chain-link perimeter fence.
+  ctx.fillStyle = '#4b7652'; ctx.fillRect(-300, 242, 1200, 55);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 222, 600, 70); ctx.clip();
+  for (let x = -90; x < 690; x += 18) {
+    path([[x, 222], [x + 70, 292]], '#284a4755', 1);
+    path([[x, 222], [x - 70, 292]], '#284a4755', 1);
   }
   ctx.restore();
+  path([[0, 222], [600, 222]], '#5a7275', 3);
+  for (let x = 30; x < 600; x += 135) path([[x, 219], [x, 294]], '#526e70', 4);
+  const asphalt = ctx.createLinearGradient(0, 292, 0, 660);
+  asphalt.addColorStop(0, '#475e65'); asphalt.addColorStop(1, '#72828a');
+  ctx.fillStyle = asphalt; ctx.fillRect(-300, 292, 1200, 600);
+  // Expansion joints follow the perspective of the paved surface.
+  path([[20, 292], [-180, 660]], '#263d4540', 2);
+  path([[580, 292], [780, 660]], '#263d4540', 2);
+  path([[0, 535], [600, 535]], '#263d4525', 1);
   path([[223, 299], [377, 299], [453, 486], [147, 486]], team.floor, 1, true, true);
   const paint = '#fff8e5cf';
   path([[70, 300], [530, 300], [684, 650], [-84, 650]], paint, 2.5, true);
@@ -185,12 +192,14 @@ function draw() {
   const floorLight = ctx.createRadialGradient(300, 335, 10, 300, 390, 330);
   floorLight.addColorStop(0, '#ffffff19'); floorLight.addColorStop(1, '#ffffff00'); ctx.fillStyle = floorLight; ctx.fillRect(0, 292, 600, 368);
   ellipse(303, 316, 60, 12, '#261c1844', true);
-  path([[300, 111], [300, 305]], '#101720', 15);
-  path([[304, 116], [304, 300]], '#78838c', 2);
-  ctx.fillStyle = team.floor; ctx.fillRect(282, 270, 36, 40);
+  // Freestanding galvanized park hoop, bolted into a concrete footing outdoors.
+  ellipse(324, 310, 24, 8, '#b3b8b5', true);
+  path([[324, 308], [324, 133], [300, 111]], '#465963', 12);
+  path([[328, 306], [328, 132], [303, 110]], '#bacbd2', 3);
+  ctx.fillStyle = '#d7dfdf'; ctx.fillRect(313, 303, 22, 7);
   // Glass backboard with a metal frame, transparent reflection and rim bracket.
   ctx.shadowColor = '#00000066'; ctx.shadowBlur = 13; ctx.shadowOffsetY = 6;
-  ctx.fillStyle = '#cde2eb28'; ctx.fillRect(187, 75, 226, 126);
+  ctx.fillStyle = '#e7f1f5c9'; ctx.fillRect(187, 75, 226, 126);
   ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   ctx.strokeStyle = '#8d9aa2'; ctx.lineWidth = 7; ctx.strokeRect(187, 75, 226, 126);
   ctx.strokeStyle = '#e0e8e8'; ctx.lineWidth = 2; ctx.strokeRect(187, 75, 226, 126);
@@ -200,6 +209,10 @@ function draw() {
   ctx.fillStyle = '#c95620'; ctx.fillRect(291, 191, 18, 18);
   path([[286, 198], [275, 210]], '#94411e', 4); path([[314, 198], [325, 210]], '#94411e', 4);
   drawNet(false); drawRim(false);
+  // The near rim/net sit behind a ball approaching from the foreground.
+  const insideBasket = ball && (ball.phase === 'net' || ball.phase === 'drop' ||
+    (ball.phase === 'flight' && ball.vy > 0));
+  if (!insideBasket) { drawNet(true); drawRim(true); }
   const start = STARTS[Math.min(shots, 9)];
   if (ball) {
     const radius = ball.phase === 'flight' ? 15 + 14 * Math.max(0, 1 - ball.age / .65) : 15;
@@ -207,21 +220,27 @@ function draw() {
     ellipse(ball.x, 607 - 225 * depth, radius * 1.1, 5, '#30231344', true);
     drawBall(ball.x, ball.y, radius, ball.age * 3.8);
   } else if (shots < 10) {
-    ellipse(start, 608, 35, 8, '#30231355', true);
-    const preview = launch(start, Number($('aim').value), Number($('power').value));
+    ellipse(start, shotY(start) + 30, 35, 8, '#30231355', true);
+    const preview = launch(start, Number($('aim').value), Number($('power').value), winds[Math.min(shots, 9)] || 0);
     for (let i = 0; i < 12; i++) {
       stepShot(preview, .022);
       if (i > 2) ellipse(preview.x, preview.y, 2.5, 2.5, '#fff7dfb0', true);
     }
-    ellipse(start, START_Y, 39, 39, '#fffcde80');
-    drawBall(start, START_Y, 29);
-    ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#46311e'; ctx.textAlign = 'center'; ctx.fillText(drag ? 'RELEASE TO SHOOT' : 'SWIPE UP TO SHOOT', start, 637);
+    ellipse(start, shotY(start), 39, 39, '#fffcde80');
+    drawBall(start, shotY(start), 29);
+    ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#f4f7f8'; ctx.textAlign = 'center'; ctx.fillText(drag ? 'RELEASE TO SHOOT' : 'SWIPE UP TO SHOOT', start, 637);
   }
-  // Occlusion makes a made shot visibly pass inside the rim and behind the net.
-  if (!ball || ball.phase !== 'flight' || ball.y > 238 || ball.vy > 0) {
-    drawNet(true); drawRim(true);
-  } else {
+  // On descent the ball passes behind the near rim and visible front mesh.
+  // Misses outside the basket never get covered by its net.
+  if (insideBasket) {
+    if (ball.phase === 'net' || ball.phase === 'drop') drawNet(true);
     drawRim(true);
+  }
+  ctx.restore();
+  if (ball?.phase === 'net') {
+    ctx.fillStyle = '#102820ee'; ctx.fillRect(192, 405, 216, 34);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('THROUGH THE NET', 300, 428);
   }
   if (flash > 0) {
     ctx.save(); ctx.globalAlpha = Math.min(flash * 2, 1); ctx.textAlign = 'center';
@@ -239,7 +258,7 @@ function animate(time) {
     if (outcome.event === 'make') {
       streak++; made++;
       const points = pointsForMake(streak); score += points;
-      feedback = points === 3 ? 'ON FIRE! +3' : 'BUCKET! +2'; flash = 1;
+      feedback = points === 3 ? 'SWISH! +3' : 'SWISH! +2'; flash = 1;
       $('status').textContent = feedback; sync();
     } else if (outcome.event) {
       feedback = outcome.event === 'rim' ? 'Off the rim. So close!' : 'Just wide. Adjust your aim.';
@@ -255,26 +274,27 @@ function courtPoint(event) {
     y: (event.clientY - box.top - (box.height - 660 * scale) / 2) / scale };
 }
 canvas.addEventListener('pointerdown', (event) => {
-  if (ball || shots >= 10 || drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
+  if (!ready || ball || shots >= 10 || drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
   const p = courtPoint(event);
-  if (Math.hypot(p.x - STARTS[shots], p.y - START_Y) > 60) return;
-  drag = { ...p, id: event.pointerId };
+  if (Math.hypot(p.x - STARTS[shots], p.y - shotY(STARTS[shots])) > 60) return;
+  drag = { ...p, id: event.pointerId, started: event.timeStamp };
   canvas.setPointerCapture(event.pointerId); canvas.focus({ preventScroll: true });
 });
+function swipe(p, time) {
+  const input = flickInput(p.x - drag.x, drag.y - p.y, time - drag.started, 'basketball');
+  $('aim').value = input.aim; $('power').value = input.power; updateControls();
+}
 canvas.addEventListener('pointermove', (event) => {
   if (!drag || event.pointerId !== drag.id) return;
-  const p = courtPoint(event);
-  $('aim').value = Math.round(clamp((p.x - drag.x) / 3, -30, 30));
-  $('power').value = Math.round(clamp((drag.y - p.y) / 2.5, 0, 100));
-  updateControls();
+  swipe(courtPoint(event), event.timeStamp);
 });
 canvas.addEventListener('pointerup', (event) => {
   if (!drag || event.pointerId !== drag.id) return;
   const p = courtPoint(event), distance = drag.y - p.y;
-  drag = null;
+  swipe(p, event.timeStamp); drag = null;
   if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   if (distance >= 25) shoot();
-  else $('status').textContent = 'Swipe upward from the ball to shoot. Longer swipes add power.';
+  else $('status').textContent = 'Flick upward from the ball. A longer, faster flick adds power.';
 });
 canvas.addEventListener('pointercancel', () => { drag = null; });
 canvas.addEventListener('lostpointercapture', () => { drag = null; });

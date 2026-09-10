@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { launch, stepShot, STARTS, HOOP, pointsForMake } from '../basketball/physics.js';
+import { launch, stepShot, STARTS, shotY, GRAVITY, HOOP, pointsForMake } from '../basketball/physics.js';
 function simulate(x, aim, power, dt = 1 / 120) {
   const ball = launch(x, aim, power), events = [];
   for (let i = 0; i < 1000; i++) {
@@ -14,7 +14,8 @@ assert.equal(simulate(300, 0, 0).ball.made, false, 'Underpowered shot misses');
 assert.equal(simulate(300, 30, 72).ball.made, false, 'Wide shot misses');
 assert.deepEqual(simulate(300, 6, 72).events, ['rim'], 'Rim contact bounces without scoring');
 for (const x of STARTS) {
-  const aim = Math.round((HOOP.x - x) / 6);
+  const flightTime = (1160 + Math.sqrt(1160 ** 2 - 2 * GRAVITY * (shotY(x) - HOOP.y))) / GRAVITY;
+  const aim = Math.round((HOOP.x - x) / (6 * flightTime));
   assert.equal(simulate(x, aim, 72).ball.made, true, `Shot at ${x} is makeable`);
 }
 assert.equal(simulate(220, 13, 72, 1 / 60).ball.made, simulate(220, 13, 72, 1 / 120).ball.made, 'Scoring is stable across frame steps');

@@ -19,7 +19,7 @@ export function createRenderer(canvas) {
   const project = (x, z, h = 0) => {
     const depth = Math.max(z + 5 - camera.follow, 1.5);
     const scale = 390 / depth;
-    return { x: 300 + x * scale, y: camera.horizon + (5.3 - h) * scale, scale };
+    return { x: 300 + (x - (camera.x || 0)) * scale, y: camera.horizon + (5.3 - h) * scale, scale };
   };
   function path(points, color, width = 1, fill = false) {
     ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y);
@@ -165,6 +165,7 @@ export function createRenderer(canvas) {
   }
   function draw(state) {
     const { distance, team, ball, trail, drag, aim, result } = state;
+    camera.x = state.startX || 0;
     camera.follow = ball ? Math.min(ball.z * .35, distance - 18) : 0;
     camera.horizon = 180;
     if (ball) {

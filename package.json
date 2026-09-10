@@ -1,0 +1,10 @@
+{
+  "name": "rocky-top-ventures-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node tests/hoops.mjs && node tests/field-goal.mjs && node tests/arcade.mjs && node tests/leaderboard.mjs"
+  },
+  "dependencies": { "@netlify/blobs": "10.5.0" }
+}
