@@ -3,46 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Tap to shoot at a moving hoop. Five levels, ten shots, and all schools competing together.">
+  <meta name="description" content="Tap to shoot at a moving hoop. Five levels, sixty seconds, and all schools competing together.">
   <meta name="theme-color" content="#101714">
-  <title>Hoops Challenge · Rocky Top Ventures</title>
+  <title>Street Hoops · Rocky Top Ventures</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./game.js?v=tap-hoops-4"></script>
+  <script type="module" src="./game.js?v=street-hoops-6"></script>
 </head>
-<body>
+<body class="retro-hoops">
   <main class="game-shell">
     <header class="masthead">
       <a id="back-link" href="../rockytop/">← Back to Vol Nation</a>
       <span>ROCKY TOP VENTURES <b>/ ARCADE</b></span>
     </header>
     <section class="game-heading">
-      <div><p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p><h1>Hoops Challenge<span>.</span></h1><p>Time your tap. Lead the hoop. Go the distance.</p></div>
+      <div><p class="eyebrow">SCHOOL PRIDE. STREET COURT.</p><h1>Street Hoops<span>.</span></h1><p>Line it up. Tap your player. Sink the shot.</p></div>
       <span class="team-stamp" id="team-stamp">TENNESSEE</span>
     </section>
     <div class="game-layout">
       <section class="court-panel" aria-label="Basketball game">
         <div class="scoreboard">
           <div><span>SCORE</span><strong id="score">00</strong></div>
-          <div><span>SHOTS LEFT</span><strong id="shots">10</strong></div>
+          <div><span>TIME LEFT</span><strong id="shots">60s</strong></div>
           <div><span>STREAK</span><strong id="streak">0</strong></div>
           <div><span>PERSONAL BEST</span><strong id="best">00</strong></div>
         </div>
         <div class="court-wrap">
-          <canvas id="court" width="600" height="660" tabindex="0" aria-label="Basketball court. Tap to shoot at the moving hoop, or press Space or Enter.">Use the Shoot button to play.</canvas>
+          <canvas id="court" width="600" height="450" tabindex="0" aria-label="Basketball court. Tap one of four players when the hoop lines up. Keyboard: 1 through 4 shoot from each player; Space shoots from the selected player.">Use the Shoot button to play.</canvas>
           <div class="court-badge"><span id="team-name">VOL NATION</span><span id="wind">LEVEL 1 / 5</span></div>
+          <div class="result" id="intro">
+            <p class="eyebrow">ONE MINUTE. MAKE IT COUNT.</p><h2>60-second challenge</h2>
+            <p>Tap any of the four players and lead the moving hoop.<br>Keep shooting until the buzzer!</p>
+            <button id="start-round" type="button" disabled>Start 60-second round →</button>
+          </div>
           <div class="result" id="result" hidden>
             <p class="eyebrow">THAT’S A WRAP</p><h2 id="result-title">Nice round.</h2><p id="result-score"></p><a class="post-score-link" href="#leaderboard">See leaderboard &amp; post score ↓</a><button id="play-again" type="button">Play again ↗</button>
           </div>
         </div>
-        <div class="shot-status" id="status" role="status" aria-live="polite">Tap to shoot. Time the moving hoop.</div>
+        <div class="shot-status" id="status" role="status" aria-live="polite">Press Start when you are ready.</div>
       </section>
       <aside class="sideline">
         <section class="controls" aria-labelledby="controls-title">
           <p class="eyebrow">ALL ABOUT TIMING</p><h2 id="controls-title">Wait for it.</h2>
-          <p>The hoop moves left and right. Tap anywhere on the court to shoot straight ahead. Lead the hoop: the ball takes a moment to arrive.</p>
-          <p>Five levels. Two shots per level. The basket moves farther away and faster as you progress.</p>
+          <p>The hoop moves left and right. Tap the player beneath it to shoot. The hoop keeps moving during the shot, so time your release to meet it.</p>
+          <p>One minute. As many shots as you can take. The hoop moves farther away every 12 seconds. A shot released before the buzzer still counts.</p>
+          <div class="player-buttons" role="group" aria-label="Choose a player and shoot">
+            <button type="button" data-shooter="0" aria-pressed="false">Player 1</button>
+            <button type="button" data-shooter="1" aria-pressed="true">Player 2</button>
+            <button type="button" data-shooter="2" aria-pressed="false">Player 3</button>
+            <button type="button" data-shooter="3" aria-pressed="false">Player 4</button>
+          </div>
           <button class="shoot-button" id="shoot" type="button">Tap to shoot <span>↑</span></button>
-          <p class="keyboard-note">Mouse: click the court or Shoot. Keyboard: focus the court and press Space or Enter. Shots fire once per tap.</p>
+          <p class="keyboard-note">Tap a player or use the four buttons. Keyboard: focus the court and press 1–4 to shoot from that player. Space or Enter shoots from the selected player.</p>
           <button class="restart" id="restart" type="button">Start a new round</button>
         </section>
         <section class="rules"><p class="eyebrow">MAKE EVERY SHOT COUNT</p><div><b>02</b><p>Points for every bucket.</p></div><div><b>+1</b><p>Bonus on your third consecutive make and every make after it.</p></div><p class="save-note" id="save-note">Your best stays on this device. No account needed.</p></section>

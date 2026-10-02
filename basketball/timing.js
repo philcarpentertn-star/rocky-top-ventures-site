@@ -1,25 +1,33 @@
-// Shared timing rules for animation and server verification. Seconds are round-relative.
-export const SHOTS = 10;
+// Absolute seconds since the player starts the one-minute round.
+export const SHOOTERS = [90, 230, 370, 510];
+export const ROUND_SECONDS = 60;
 export const FLIGHT = .8;
 export const RECOVERY = .6;
-export function levelFor(index) { return Math.floor(index / 2) + 1; }
-export function hoopAt(index, phase, time) {
-  const level = levelFor(index);
-  return { x: 300 + (105 + level * 12) * Math.sin(phase + time * (.95 + level * .19)),
+export const SHOT_SECONDS = FLIGHT + RECOVERY;
+export const MAX_SHOTS = Math.ceil(ROUND_SECONDS / SHOT_SECONDS);
+export function levelFor(time) { return Math.min(5, Math.max(1, Math.floor(time / 12) + 1)); }
+export function motionAt(time) {
+  const completed = Math.min(4, Math.floor(time / 12));
+  return 12 * (completed * .85 + .13 * completed * (completed + 1) / 2) + (time - completed * 12) * (.85 + (completed + 1) * .13);
+}
+export function hoopAt(time, phase) {
+  const level = levelFor(time);
+  return { x: 300 + 225 * Math.sin(phase + motionAt(time)),
     y: 250 - level * 21, scale: 1.08 - level * .105, level };
 }
-export function evaluate(index, phase, time) {
-  const hoop = hoopAt(index, phase, time + FLIGHT);
-  return { made: Math.abs(hoop.x - 300) <= 27 * hoop.scale, hoop };
+export function evaluate(time, phase, shooter = 1) {
+  const hoop = hoopAt(time + FLIGHT, phase);
+  return { made: Math.abs(hoop.x - SHOOTERS[shooter]) <= 22 * hoop.scale, hoop };
 }
 export function replayTiming(phases, attempts) {
-  if (!Array.isArray(attempts) || attempts.length !== SHOTS) throw new Error('Complete a full round first.');
-  let score = 0, made = 0, streak = 0, duration = 0;
+  if (!Array.isArray(attempts) || attempts.length > MAX_SHOTS) throw new Error('Invalid round.');
+  let score = 0, made = 0, streak = 0, nextShot = 0;
   attempts.forEach((input, index) => {
-    if (!input || !Number.isFinite(input.time) || input.time < 0 || input.time > 120) throw new Error('Invalid shot timing.');
-    const good = evaluate(index, phases[index], input.time).made;
+    if (!input || !Number.isFinite(input.time) || input.time < nextShot - 1e-9 || input.time >= ROUND_SECONDS || !Number.isInteger(input.shooter) || input.shooter < 0 || input.shooter >= SHOOTERS.length) throw new Error('Invalid shot timing.');
+    const good = evaluate(input.time, phases[0], input.shooter).made;
     if (good) { made++; streak++; score += streak >= 3 ? 3 : 2; } else streak = 0;
-    duration += input.time + FLIGHT + RECOVERY;
+    nextShot = input.time + SHOT_SECONDS;
   });
-  return { score, made, longest: 0, duration };
+  // A ball released before the buzzer is allowed to finish after zero.
+  return { score, made, longest: 0, duration: Math.max(ROUND_SECONDS, nextShot) };
 }

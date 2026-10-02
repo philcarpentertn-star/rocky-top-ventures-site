@@ -1,0 +1,11 @@
+# Generated arcade artwork
+
+Created with the built-in image-generation tool. Images are new artwork, not extracted game assets.
+
+## street-court.png
+
+Use case: stylized-concept. Asset type: production background for a 4:3 retro touchscreen basketball game, landscape 1200x900. Create a richly textured late-1990s prerendered 3D arcade city playground in bright afternoon light. Eye-level rear-court view, symmetrical composition. Worn olive-green outdoor asphalt basketball half court fills bottom 45 percent, cream painted key centered and receding toward the horizon at y=55 percent. Chain-link fence spans width at y=25 to 55 percent with a silver bench and small boombox left and green trash can right. Beyond are another playground, leafy trees framing sides, old New York brick apartment buildings, blue sky. Slight old arcade digitized-photo grain and softened textures, realistic rather than flat vector. Critical: NO people, NO basketballs, NO basketball hoop/backboard/pole anywhere, NO words, NO score UI, NO logos. Empty central upper half for a separately animated hoop. This is a playable game background, not a screenshot or cabinet.
+
+## team-players.png
+
+Use case: stylized-concept. Asset type: transparent game character sprite atlas. Make exactly four individual basketball players seen strictly from behind from waist to top of head, one player centered in EACH of four equal quadrants of a square 1024x1024 image. Actual transparent background. Each isolated sprite fits entirely within its own 512x512 quadrant with 40 pixel margins. Same athletic adult male pose and size in all four: muscular shoulders, short black hair, brown skin, sleeveless college basketball jersey, elbows bent and hands up on either side of his head in shooting-ready pose. NO ball. Crop each torso at waist. Detailed late-1990s prerendered 3D arcade graphics with realistic skin shading and fabric folds. TOP LEFT bright Tennessee orange jersey with white piping; TOP RIGHT Florida royal blue jersey with orange and white piping; BOTTOM LEFT Alabama dark crimson jersey with white piping; BOTTOM RIGHT Texas burnt orange jersey with white piping. Jerseys have blank backs, NO text, numbers, logos, background, shadows on ground, grid lines, or labels. Clean alpha edges. Rear view only. Exact 2x2 aligned atlas, identical pose across all four sprites.

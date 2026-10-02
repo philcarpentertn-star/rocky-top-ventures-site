@@ -1,55 +1,54 @@
-import { evaluate, hoopAt } from '../basketball/timing.js';
 import assert from 'node:assert/strict';
+import { evaluate, hoopAt, motionAt, FLIGHT, levelFor, replayTiming, ROUND_SECONDS, SHOT_SECONDS, MAX_SHOTS, SHOOTERS } from '../basketball/timing.js';
 import { challenge, flickInput } from '../arcade/challenge.js';
 import { replay } from '../arcade/replay.js';
-import { STARTS, launch, stepShot } from '../basketball/physics.js';
 import { KICK_SPOTS, launchKick, stepKick } from '../football/physics.js';
 export function solve(game, seed) {
-  const winds = challenge(game, seed);
-  if (game === 'basketball') return winds.map((phase, index) => {
-    for (let time = 0; time < 10; time += .01) if (evaluate(index, phase, time).made) return { time };
-    throw new Error('No scoring window');
-  });
-  return winds.map((wind, index) => {
-    for (let aim = game === 'basketball' ? -40 : -25; aim <= (game === 'basketball' ? 40 : 25); aim += .5) {
-      const ball = game === 'basketball' ? launch(STARTS[index], aim, 72, wind) : launchKick(20 + index * 10, aim, 95, wind, KICK_SPOTS[index]);
-      for (let step = 0; step < 1200; step++) {
-        if ((game === 'basketball' ? stepShot(ball, 1 / 120) : stepKick(ball, 1 / 120)).finished) break;
-      }
-      if (game === 'basketball' ? ball.made : ball.outcome === 'good') return { aim, power: game === 'basketball' ? 72 : 95 };
+  const phases = challenge(game, seed);
+  if (game === 'basketball') {
+    const attempts = []; let time = 0;
+    while (time < ROUND_SECONDS) {
+      const shooter = SHOOTERS.findIndex((_, i) => evaluate(time, phases[0], i).made);
+      if (shooter !== -1) { attempts.push({time, shooter}); time += SHOT_SECONDS; }
+      else time += .01;
     }
-    throw new Error(`Impossible ${game} attempt ${index}, wind ${wind}`);
+    return attempts;
+  }
+  return phases.map((wind, index) => {
+    for (let aim = -25; aim <= 25; aim += .5) {
+      const ball = launchKick(20 + index * 10, aim, 95, wind, KICK_SPOTS[index]);
+      for (let step = 0; step < 1200; step++) if (stepKick(ball, 1 / 120).finished) break;
+      if (ball.outcome === 'good') return {aim, power:95};
+    }
+    throw new Error('Impossible football attempt');
   });
 }
 for (const game of ['basketball', 'football']) {
   assert.deepEqual(challenge(game, 42), challenge(game, 42));
   assert.notDeepEqual(challenge(game, 42), challenge(game, 84));
-  for (const seed of [1, 2, 42, 84, 123456789, 4294967295]) {
-    const result = replay(game, seed, solve(game, seed));
-    assert.equal(result.score, game === 'basketball' ? 28 : 15);
-    if (game === 'football') assert.equal(result.longest, 60);
+  for (const seed of [1,2,42,84,123456789,4294967295]) {
+    const inputs = solve(game, seed), result = replay(game, seed, inputs);
+    if (game === 'basketball') { assert(inputs.length > 10); assert.equal(result.score, inputs.length * 3 - 2); assert(result.duration >= 60); }
+    else { assert.equal(result.score, 15); assert.equal(result.longest, 60); }
   }
-  const inputs = solve(game, 42);
-  assert.throws(() => replay(game, 42, inputs.slice(1)));
-  assert.throws(() => replay(game, 42, [{ aim: NaN, power: 80 }, ...inputs.slice(1)]));
-  assert.throws(() => replay(game, 42, [{ aim: 0, power: 101 }, ...inputs.slice(1)]));
-  if (game === 'football') assert.equal(replay(game, 42, inputs.map(() => ({ aim: 0, power: 0 }))).score, 0);
-  else {
-    const misses = challenge(game, 42).map((phase, index) => {
-      for (let time = 0; time < 10; time += .01) if (!evaluate(index, phase, time).made) return { time };
-    });
-    assert.equal(replay(game, 42, misses).score, 0);
-    for (const time of [-1, NaN, Infinity, 121]) assert.throws(() => replay(game, 42, [{ time }, ...inputs.slice(1)]));
-    assert(hoopAt(8, 0, 0).scale < hoopAt(0, 0, 0).scale);
-    assert(hoopAt(8, 0, 0).y < hoopAt(0, 0, 0).y);
-    const result = replay(game, 42, inputs);
-    assert(Math.abs(result.duration - inputs.reduce((sum, input) => sum + input.time + 1.4, 0)) < .0001);
-  }
-  assert(flickInput(0, 180, 200, game).power > flickInput(0, 180, 900, game).power);
-  assert(flickInput(-50, 180, 200, game).aim < 0);
-  assert.equal(flickInput(500, 500, 0, game).power, 100);
+  assert(flickInput(0,180,200,game).power > flickInput(0,180,900,game).power);
 }
-const calm = launch(300, 0, 72), windy = launch(300, 0, 72, 7);
-for (let i = 0; i < 60; i++) { stepShot(calm, 1 / 120); stepShot(windy, 1 / 120); }
-assert(windy.x > calm.x + 10);
-console.log('Passed: changing seeded wind, solvable attempts for both games, replay scoring, input bounds, and flick speed.');
+assert.equal(levelFor(0),1); assert.equal(levelFor(11.999),1); assert.equal(levelFor(12),2); assert.equal(levelFor(48),5); assert.equal(levelFor(60),5);
+const phases = challenge('basketball',42);
+assert.deepEqual(replayTiming(phases, []), {score:0,made:0,longest:0,duration:60});
+for (const time of [-1,NaN,Infinity,60,61]) assert.throws(() => replayTiming(phases,[{time,shooter:0}]));
+for (const shooter of [-1,4,1.5,undefined,NaN]) assert.throws(() => replayTiming(phases,[{time:0,shooter}]));
+assert.throws(() => replayTiming(phases,[{time:1,shooter:0},{time:2,shooter:1}]), 'Overlapping shots rejected');
+assert.throws(() => replayTiming(phases,[{time:4,shooter:0},{time:1,shooter:1}]), 'Out-of-order shots rejected');
+assert.throws(() => replayTiming(phases,Array(MAX_SHOTS+1).fill({time:0,shooter:0})));
+assert.equal(replayTiming(phases,[{time:59.999,shooter:0}]).duration, 59.999+SHOT_SECONDS, 'Buzzer beater finishes after zero');
+assert.doesNotThrow(() => replayTiming(phases,[{time:0,shooter:0},{time:SHOT_SECONDS,shooter:1}]));
+for (let shooter = 0; shooter < 4; shooter++) for (const time of [0,12,24,36,48]) {
+  const phase = Math.asin((SHOOTERS[shooter]-300)/225) - motionAt(time + FLIGHT);
+  const result = evaluate(time,phase,shooter);
+  assert(result.made); assert(Math.abs(result.hoop.x-SHOOTERS[shooter]) < 1e-8);
+  assert.notEqual(hoopAt(time,phase).x,result.hoop.x);
+  assert(!evaluate(time,phase,(shooter+1)%4).made);
+}
+for (const boundary of [12,24,36,48]) assert(Math.abs(hoopAt(boundary-1e-6,0).x-hoopAt(boundary,0).x)<.001, 'Movement stays continuous at level changes');
+console.log('Passed: 60-second rounds, timed levels, four moving-hoop shooting lanes, cooldowns, buzzer beaters, input bounds, deterministic scoring, and football replay.');

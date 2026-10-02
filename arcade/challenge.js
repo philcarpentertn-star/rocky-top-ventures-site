@@ -1,6 +1,6 @@
 // Shared by the browser and score verifier. Keep rules versioned with the board.
 export const RULES_VERSION = 3;
-export const rulesVersion = game => game === 'basketball' ? 4 : RULES_VERSION;
+export const rulesVersion = game => game === 'basketball' ? 6 : RULES_VERSION;
 export const TEAMS = ['vols', 'gators', 'tide', 'texas'];
 export function challenge(game, seed) {
   let state = seed >>> 0;
@@ -8,7 +8,7 @@ export function challenge(game, seed) {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
     return state / 4294967296;
   };
-  if (game === 'basketball') return Array.from({ length: 10 }, () => random() * Math.PI * 2);
+  if (game === 'basketball') return Array.from({ length: 43 }, () => random() * Math.PI * 2);
   const strengths = game === 'basketball' ? [2, 3, 4, 4, 5, 5, 6, 6, 7, 7] : [6, 8, 10, 12, 14];
   let previous = 0;
   return strengths.map(strength => {
