@@ -1,103 +1,60 @@
-import { flickInput, windLabel } from '../arcade/challenge.js';
 import { leaderboard } from '../arcade/leaderboard.js';
-import { HOOP, shotY, STARTS, clamp, launch, stepShot, pointsForMake } from './physics.js';
-
-const $ = (id) => document.getElementById(id);
-const canvas = $('court');
-const ctx = canvas.getContext('2d');
+import { SHOTS, FLIGHT, RECOVERY, levelFor, hoopAt, evaluate } from './timing.js';
+const $ = id => document.getElementById(id);
+const canvas = $('court'), ctx = canvas.getContext('2d');
 const teams = {
   vols: { name: 'VOL NATION', color: '#ff8200', light: '#ffb765', floor: '#d96608', back: 'Vol Nation', path: 'rockytop', chant: 'Rocky Top!' },
   gators: { name: 'GATOR NATION', color: '#fa8b36', light: '#ffc18e', floor: '#244874', back: 'Gator Nation', path: 'gators', chant: 'Go Gators!' },
   tide: { name: 'CRIMSON TIDE', color: '#9e1b32', light: '#ffc1ce', floor: '#8d1832', back: 'Crimson Tide', path: 'dixielanddelight', chant: 'Roll Tide!' },
   texas: { name: 'LONGHORN NATION', color: '#bf5700', light: '#ffbc85', floor: '#bf5700', back: 'Longhorn Nation', path: 'texas', chant: 'Hook ’em Horns!' }
 };
+
 let teamKey = new URLSearchParams(location.search).get('team');
 if (!Object.hasOwn(teams, teamKey)) teamKey = 'vols';
-let team = teams[teamKey];
-let score = 0, shots = 0, streak = 0, made = 0, best = 0;
-let ball = null, drag = null, feedback = '', flash = 0, frame = 0, accumulator = 0;
-let storageAvailable = true;
-let ready = false, winds = [];
-const board = leaderboard('basketball', teamKey);
-
-function loadBest() {
-  try {
-    const stored = Number(localStorage.getItem(`rtv-hoops-v3-best-${teamKey}`));
-    best = Number.isInteger(stored) && stored >= 0 && stored <= 28 ? stored : 0;
-  } catch { storageAvailable = false; best = 0; }
-}
-function saveBest() {
-  if (score <= best) return;
-  best = score;
-  try { localStorage.setItem(`rtv-hoops-v3-best-${teamKey}`, String(best)); }
-  catch { storageAvailable = false; }
-}
+const team = teams[teamKey], board = leaderboard('basketball', teamKey);
+let score = 0, shots = 0, made = 0, streak = 0, best = 0, ready = false;
+let phases = [], elapsed = 0, ball = null, lastFrame = 0, feedback = '', storageAvailable = true;
+try { best = Number(localStorage.getItem(`rtv-hoops-v4-best-${teamKey}`)) || 0; } catch { storageAvailable = false; }
 function sync() {
-  $('wind').textContent = ready ? windLabel(ball ? ball.wind : winds[Math.min(shots, 9)]) : 'Reading the wind…';
   $('score').textContent = String(score).padStart(2, '0');
-  $('shots').textContent = 10 - shots;
+  $('shots').textContent = SHOTS - shots;
   $('streak').textContent = streak;
-  $('best').textContent = String(best).padStart(2, '0');
-  const locked = !ready || Boolean(ball) || shots >= 10;
-  for (const id of ['shoot', 'aim', 'power']) $(id).disabled = locked;
-  $('save-note').textContent = storageAvailable ? 'Your best stays on this device. No account needed.' : 'Storage is unavailable. Your best lasts for this visit.';
-}
-function updateControls() {
-  const aim = Number($('aim').value);
-  $('aim-value').textContent = aim === 0 ? 'Center' : `${Math.abs(aim)} ${aim < 0 ? 'left' : 'right'}`;
-  $('power-value').textContent = `${$('power').value}%`;
+  $('best').textContent = best;
+  $('wind').textContent = `LEVEL ${levelFor(Math.min(shots, 9))} / 5`;
+  $('shoot').disabled = !ready || !!ball || shots === SHOTS;
+  $('save-note').textContent = storageAvailable ? 'Your best stays on this device. No account needed.' : 'Your best lasts for this visit.';
 }
 async function reset() {
-  ready = false;
-  score = 0; shots = 0; streak = 0; made = 0; ball = null; drag = null; feedback = ''; flash = 0;
-  $('result').hidden = true;
-  $('aim').value = 0; $('power').value = 72;
-  $('status').textContent = 'Swipe up from the ball, or set your shot below.';
-  updateControls(); sync();
+  ready = false; score = shots = made = streak = elapsed = 0; ball = null; feedback = '';
+  $('result').hidden = true; $('status').textContent = 'Getting the court ready…'; sync();
   const next = await board.start();
   if (!next) return;
-  winds = next; ready = true; sync();
-}
-function applyTeam() {
-  team = teams[teamKey];
-  $('team-stamp').textContent = teamKey === 'vols' ? 'TENNESSEE' : teamKey === 'gators' ? 'FLORIDA' : teamKey === 'texas' ? 'TEXAS' : 'ALABAMA';
-  document.documentElement.style.setProperty('--accent', team.color);
-  document.documentElement.style.setProperty('--accent-light', team.light);
-  document.documentElement.style.setProperty('--team-floor', team.floor);
-  document.documentElement.style.setProperty('--button-ink', (teamKey === 'tide' || teamKey === 'texas') ? '#ffffff' : '#141914');
-  $('team-name').textContent = team.name;
-  $('back-link').href = `../${team.path}/`;
-  $('back-link').textContent = `← Back to ${team.back}`;
-  loadBest(); reset();
+  phases = next; ready = true;
+  $('status').textContent = 'Tap to shoot. Lead the hoop—it keeps moving while the ball flies.'; sync();
 }
 function shoot() {
-  if (!ready || ball || shots >= 10) return;
-  ball = launch(STARTS[shots], Number($('aim').value), Number($('power').value), winds[shots]);
-  board.record(Number($('aim').value), Number($('power').value));
-  shots++; feedback = ''; drag = null;
-  $('status').textContent = 'Shot away…';
-  sync();
+  if (!ready || ball || shots >= SHOTS) return;
+  const time = Math.min(elapsed, 120);
+  ball = { time, age: 0, ...evaluate(shots, phases[shots], time) };
+  board.record({ time }); feedback = ''; $('status').textContent = 'Shot away…'; sync();
 }
 function finishShot() {
-  if (!ball.made) {
-    streak = 0;
-    feedback = feedback || (Number($('power').value) < 58 ? 'A little more power.' : 'Adjust your aim and try again.');
+  if (ball.made) { made++; streak++; const points = streak >= 3 ? 3 : 2; score += points; feedback = `SWISH! +${points}`; }
+  else { streak = 0; feedback = 'Just missed. Lead the hoop!'; }
+  shots++; ball = null; elapsed = 0;
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem(`rtv-hoops-v4-best-${teamKey}`, String(best)); } catch { storageAvailable = false; }
   }
-  ball = null;
-  saveBest(); sync();
-  if (shots === 10) {
+  sync();
+  if (shots === SHOTS) {
     $('result-title').textContent = made >= 8 ? 'Lights out.' : made >= 4 ? 'Finding your rhythm.' : 'Keep shooting.';
     $('result-score').textContent = `${score} points · ${made} of 10 made\n${team.chant}`;
-    $('result').hidden = false;
-    board.finish();
-    $('status').textContent = `Round complete: ${score} points, ${made} of 10 made. Personal best: ${best}.`;
+    $('result').hidden = false; board.finish();
+    $('status').textContent = `Round complete: ${score} points. ${made} of 10 made.`;
     $('play-again').focus({ preventScroll: true });
-  } else {
-    $('status').textContent = `${feedback} ${10 - shots} shots left.`;
-    $('aim').value = 0; updateControls();
-  }
+  } else $('status').textContent = `${feedback} Level ${levelFor(shots)}. ${SHOTS - shots} shots left.`;
 }
-
 function path(points, color, width = 2, close = false, fill = false) {
   ctx.beginPath(); ctx.moveTo(...points[0]);
   for (const point of points.slice(1)) ctx.lineTo(...point);
@@ -122,188 +79,80 @@ function drawBall(x, y, radius, rotation = 0) {
   ellipse(radius * .95, 0, radius * .7, radius * 1.25, '#70340e', false, 1.7);
   ctx.restore(); ctx.restore();
 }
-function drawNet(front) {
-  const inNet = ball && ball.phase === 'net';
-  const progress = inNet ? clamp(ball.phaseAge / .58, 0, 1) : 0;
-  const stretch = inNet ? Math.sin(progress * Math.PI) * 16 : flash * 5 * Math.sin(flash * 20);
-  const sway = inNet ? (ball.x - HOOP.x) * .25 : Math.sin(flash * 14) * flash * 3;
-  ctx.strokeStyle = front ? '#ffffff' : '#71929aaa';
-  ctx.lineWidth = front ? 2 : 1;
-  // Crossing strands form real diamond-shaped openings; the front mesh covers the ball.
-  for (let col = 0; col <= 8; col++) {
-    for (const direction of [-1, 1]) {
-      ctx.beginPath();
-      for (let row = 0; row <= 4; row++) {
-        const t = row / 4;
-        const half = 44 - 19 * t;
-        const offset = clamp(col / 8 * 2 - 1 + direction * (row % 2) / 8, -1, 1);
-        const x = 300 + sway * t + offset * half;
-        const y = 212 + t * (52 + stretch) + (front ? 7 : -4) * (1 - offset * offset);
-        if (row === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
+
+function basket(hoop, front = false) {
+  ctx.save(); ctx.translate(hoop.x, hoop.y); ctx.scale(hoop.scale, hoop.scale);
+  if (!front) {
+    path([[0, -20], [0, 155]], '#829a9d', 9);
+    ctx.fillStyle = '#e7f1f5dd'; ctx.fillRect(-100, -116, 200, 105);
+    ctx.strokeStyle = team.color; ctx.lineWidth = 7; ctx.strokeRect(-100, -116, 200, 105);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(-30, -62, 60, 43);
   }
-  ellipse(300 + sway, 264 + stretch, 25, 4, front ? '#fff7e3bb' : '#a4b4b866', false, 1.3);
-}
-function drawRim(front) {
-  ctx.beginPath(); ctx.ellipse(300, 210, 44, 18, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
-  ctx.strokeStyle = '#773016'; ctx.lineWidth = 8; ctx.stroke();
-  ctx.strokeStyle = '#f77828'; ctx.lineWidth = 5; ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(300, 208.5, 44, 18, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
-  ctx.strokeStyle = '#ffc184'; ctx.lineWidth = 1.5; ctx.stroke();
+  for (let i = -4; i <= 4; i++) {
+    path([[i * 10, 2], [i * 6, 49]], front ? '#fff9eb' : '#83969a', front ? 1.7 : 1);
+  }
+  for (let y = 12; y <= 48; y += 12) ellipse(0, y, 40 - y / 3, 6, '#f5eddb', false, 1);
+  ctx.beginPath(); ctx.ellipse(0, 0, 43, 13, 0, front ? 0 : Math.PI, front ? Math.PI : 2 * Math.PI);
+  ctx.strokeStyle = '#ff8f43'; ctx.lineWidth = 5; ctx.stroke(); ctx.restore();
 }
 function draw() {
-  ctx.clearRect(0, 0, 600, 660);
-  // Fixed camera keeps the rim in the same place throughout every shot.
-  ctx.save();
-  const sky = ctx.createLinearGradient(0, 0, 0, 290);
-  sky.addColorStop(0, '#258fce'); sky.addColorStop(1, '#c5ecff');
-  ctx.fillStyle = sky; ctx.fillRect(-300, -200, 1200, 860);
-  // Daylight above the park court makes its open-air setting visible at phone size.
-  ellipse(515, 90, 27, 27, '#fff1ac', true);
-  ellipse(70, 113, 43, 12, '#ffffffbb', true);
-  ellipse(99, 106, 28, 17, '#ffffffbb', true);
-  ellipse(124, 115, 34, 10, '#ffffffbb', true);
-  // Open-air court: grass beyond the baseline and a chain-link perimeter fence.
-  ctx.fillStyle = '#4b7652'; ctx.fillRect(-300, 242, 1200, 55);
-  ctx.save(); ctx.beginPath(); ctx.rect(0, 222, 600, 70); ctx.clip();
-  for (let x = -90; x < 690; x += 18) {
-    path([[x, 222], [x + 70, 292]], '#284a4755', 1);
-    path([[x, 222], [x - 70, 292]], '#284a4755', 1);
+  const index = Math.min(shots, 9);
+  const t = ball ? ball.time + Math.min(ball.age, FLIGHT) : elapsed;
+  const hoop = hoopAt(index, phases[index] || 0, t);
+  const sky = ctx.createLinearGradient(0, 0, 0, 340);
+  sky.addColorStop(0, '#163c56'); sky.addColorStop(1, '#93b9c5');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, 600, 660);
+  // A school-colored arena, with simple stands and a perspective hardwood court.
+  ctx.fillStyle = '#15272b'; ctx.fillRect(0, 240, 600, 95);
+  for (let row = 0; row < 4; row++) for (let col = 0; col < 30; col++) {
+    ctx.fillStyle = (col + row) % 3 ? team.color : '#e7dfc9'; ctx.fillRect(col * 21, 251 + row * 19, 13, 8);
   }
-  ctx.restore();
-  path([[0, 222], [600, 222]], '#5a7275', 3);
-  for (let x = 30; x < 600; x += 135) path([[x, 219], [x, 294]], '#526e70', 4);
-  const asphalt = ctx.createLinearGradient(0, 292, 0, 660);
-  asphalt.addColorStop(0, '#475e65'); asphalt.addColorStop(1, '#72828a');
-  ctx.fillStyle = asphalt; ctx.fillRect(-300, 292, 1200, 600);
-  // Expansion joints follow the perspective of the paved surface.
-  path([[20, 292], [-180, 660]], '#263d4540', 2);
-  path([[580, 292], [780, 660]], '#263d4540', 2);
-  path([[0, 535], [600, 535]], '#263d4525', 1);
-  path([[223, 299], [377, 299], [453, 486], [147, 486]], team.floor, 1, true, true);
-  const paint = '#fff8e5cf';
-  path([[70, 300], [530, 300], [684, 650], [-84, 650]], paint, 2.5, true);
-  path([[223, 300], [147, 486], [453, 486], [377, 300]], paint, 2.5);
-  ellipse(300, 486, 153, 57, paint, false, 2.5);
-  ctx.beginPath(); ctx.ellipse(300, 304, 248, 298, 0, 0, Math.PI); ctx.strokeStyle = paint; ctx.lineWidth = 2.5; ctx.stroke();
-  ctx.save(); ctx.translate(300, 425); ctx.scale(1, .6); ctx.fillStyle = '#fff6dfab'; ctx.font = 'bold 33px Arial'; ctx.textAlign = 'center'; ctx.fillText(team.name, 0, 0); ctx.restore();
-  const floorLight = ctx.createRadialGradient(300, 335, 10, 300, 390, 330);
-  floorLight.addColorStop(0, '#ffffff19'); floorLight.addColorStop(1, '#ffffff00'); ctx.fillStyle = floorLight; ctx.fillRect(0, 292, 600, 368);
-  ellipse(303, 316, 60, 12, '#261c1844', true);
-  // Freestanding galvanized park hoop, bolted into a concrete footing outdoors.
-  ellipse(324, 310, 24, 8, '#b3b8b5', true);
-  path([[324, 308], [324, 133], [300, 111]], '#465963', 12);
-  path([[328, 306], [328, 132], [303, 110]], '#bacbd2', 3);
-  ctx.fillStyle = '#d7dfdf'; ctx.fillRect(313, 303, 22, 7);
-  // Glass backboard with a metal frame, transparent reflection and rim bracket.
-  ctx.shadowColor = '#00000066'; ctx.shadowBlur = 13; ctx.shadowOffsetY = 6;
-  ctx.fillStyle = '#e7f1f5c9'; ctx.fillRect(187, 75, 226, 126);
-  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  ctx.strokeStyle = '#8d9aa2'; ctx.lineWidth = 7; ctx.strokeRect(187, 75, 226, 126);
-  ctx.strokeStyle = '#e0e8e8'; ctx.lineWidth = 2; ctx.strokeRect(187, 75, 226, 126);
-  path([[191, 79], [270, 79], [198, 195], [191, 195]], '#edf8ff12', 1, true, true);
-  path([[306, 79], [328, 79], [254, 197], [232, 197]], '#edf8ff0a', 1, true, true);
-  ctx.strokeStyle = '#f5f5ec'; ctx.lineWidth = 3.5; ctx.strokeRect(264, 140, 72, 55);
-  ctx.fillStyle = '#c95620'; ctx.fillRect(291, 191, 18, 18);
-  path([[286, 198], [275, 210]], '#94411e', 4); path([[314, 198], [325, 210]], '#94411e', 4);
-  drawNet(false); drawRim(false);
-  // The near rim/net sit behind a ball approaching from the foreground.
-  const insideBasket = ball && (ball.phase === 'net' || ball.phase === 'drop' ||
-    (ball.phase === 'flight' && ball.vy > 0));
-  if (!insideBasket) { drawNet(true); drawRim(true); }
-  const start = STARTS[Math.min(shots, 9)];
+  const floor = ctx.createLinearGradient(0, 330, 0, 660);
+  floor.addColorStop(0, '#ad8558'); floor.addColorStop(1, '#e8bd80'); ctx.fillStyle = floor; ctx.fillRect(0, 330, 600, 330);
+  for (let x = -600; x < 1200; x += 90) path([[300 + (x - 300) * .3, 330], [x, 660]], '#6c49252a', 1);
+  for (let y = 350; y < 660; y += 40) path([[0, y], [600, y]], '#6c492522', 1);
+  path([[255, 335], [345, 335], [410, 580], [190, 580]], team.floor, 1, true, true);
+  path([[255, 335], [190, 580], [410, 580], [345, 335]], '#fff8e2', 3);
+  ellipse(300, 580, 110, 33, '#fff8e2');
+  ctx.save(); ctx.translate(300, 465); ctx.scale(1, .65); ctx.textAlign = 'center'; ctx.fillStyle = '#fff8e2'; ctx.font = 'bold 27px Arial'; ctx.fillText(team.name, 0, 0); ctx.restore();
+  // Center line makes the fixed shooting lane legible.
+  ctx.setLineDash([5, 9]); path([[300, 535], [300, 310]], '#ffffff80', 2); ctx.setLineDash([]);
+  basket(hoop);
   if (ball) {
-    const radius = ball.phase === 'flight' ? 15 + 14 * Math.max(0, 1 - ball.age / .65) : 15;
-    const depth = ball.phase === 'flight' ? clamp(ball.age / 1.05, 0, 1) : 1;
-    ellipse(ball.x, 607 - 225 * depth, radius * 1.1, 5, '#30231344', true);
-    drawBall(ball.x, ball.y, radius, ball.age * 3.8);
-  } else if (shots < 10) {
-    ellipse(start, shotY(start) + 30, 35, 8, '#30231355', true);
-    const preview = launch(start, Number($('aim').value), Number($('power').value), winds[Math.min(shots, 9)] || 0);
-    for (let i = 0; i < 12; i++) {
-      stepShot(preview, .022);
-      if (i > 2) ellipse(preview.x, preview.y, 2.5, 2.5, '#fff7dfb0', true);
-    }
-    ellipse(start, shotY(start), 39, 39, '#fffcde80');
-    drawBall(start, shotY(start), 29);
-    ctx.font = 'bold 10px Arial'; ctx.fillStyle = '#f4f7f8'; ctx.textAlign = 'center'; ctx.fillText(drag ? 'RELEASE TO SHOOT' : 'SWIPE UP TO SHOOT', start, 637);
+    const progress = Math.min(ball.age / FLIGHT, 1);
+    const drop = Math.max(0, ball.age - FLIGHT) / RECOVERY;
+    const y = 578 + (ball.hoop.y - 578) * progress - Math.sin(progress * Math.PI) * 185 + drop * 135;
+    const x = ball.made ? 300 : 300 + drop * (ball.hoop.x > 300 ? -70 : 70);
+    drawBall(x, y, 29 - progress * (29 - 14 * hoop.scale), ball.age * 5);
+    if (progress === 1 && ball.made) basket(hoop, true);
+  } else if (shots < SHOTS) {
+    ellipse(300, 612, 34, 7, '#3f2a2555', true); drawBall(300, 578, 29);
   }
-  // On descent the ball passes behind the near rim and visible front mesh.
-  // Misses outside the basket never get covered by its net.
-  if (insideBasket) {
-    if (ball.phase === 'net' || ball.phase === 'drop') drawNet(true);
-    drawRim(true);
-  }
-  ctx.restore();
-  if (ball?.phase === 'net') {
-    ctx.fillStyle = '#102820ee'; ctx.fillRect(192, 405, 216, 34);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-    ctx.fillText('THROUGH THE NET', 300, 428);
-  }
-  if (flash > 0) {
-    ctx.save(); ctx.globalAlpha = Math.min(flash * 2, 1); ctx.textAlign = 'center';
-    ctx.fillStyle = '#152019d9'; ctx.fillRect(177, 95, 246, 42);
-    ctx.fillStyle = '#fff3d7'; ctx.font = 'bold 25px Arial'; ctx.fillText(feedback, 300, 124); ctx.restore();
-  }
+  ctx.fillStyle = '#10241be8'; ctx.fillRect(155, 20, 290, 44);
+  ctx.textAlign = 'center'; ctx.fillStyle = '#fff8e2'; ctx.font = 'bold 19px Arial';
+  ctx.fillText(`LEVEL ${levelFor(index)}  ·  ${10 + levelFor(index) * 5} FT`, 300, 48);
+  ctx.font = 'bold 14px Arial'; ctx.fillStyle = '#172b24';
+  ctx.fillText(!ready ? 'GETTING READY…' : ball ? (ball.age >= FLIGHT ? (ball.made ? 'NOTHING BUT NET!' : 'JUST WIDE!') : 'SHOT AWAY') : 'TAP ANYWHERE TO SHOOT', 300, 640);
 }
 function animate(time) {
-  const dt = frame ? Math.min((time - frame) / 1000, .05) : 0;
-  frame = time; accumulator += dt; flash = Math.max(0, flash - dt);
-  while (accumulator >= 1 / 120) {
-    accumulator -= 1 / 120;
-    if (!ball) continue;
-    const outcome = stepShot(ball, 1 / 120);
-    if (outcome.event === 'make') {
-      streak++; made++;
-      const points = pointsForMake(streak); score += points;
-      feedback = points === 3 ? 'SWISH! +3' : 'SWISH! +2'; flash = 1;
-      $('status').textContent = feedback; sync();
-    } else if (outcome.event) {
-      feedback = outcome.event === 'rim' ? 'Off the rim. So close!' : 'Just wide. Adjust your aim.';
-    }
-    if (outcome.finished) finishShot();
+  const dt = lastFrame ? Math.min((time - lastFrame) / 1000, .05) : 0; lastFrame = time;
+  if (ready && shots < SHOTS && !document.hidden) {
+    if (ball) { ball.age += dt; if (ball.age >= FLIGHT + RECOVERY) finishShot(); }
+    else { elapsed = Math.min(120, elapsed + dt); if (elapsed === 120) shoot(); }
   }
   draw(); requestAnimationFrame(animate);
 }
-function courtPoint(event) {
-  const box = canvas.getBoundingClientRect();
-  const scale = Math.min(box.width / 600, box.height / 660);
-  return { x: (event.clientX - box.left - (box.width - 600 * scale) / 2) / scale,
-    y: (event.clientY - box.top - (box.height - 660 * scale) / 2) / scale };
-}
-canvas.addEventListener('pointerdown', (event) => {
-  if (!ready || ball || shots >= 10 || drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
-  const p = courtPoint(event);
-  if (Math.hypot(p.x - STARTS[shots], p.y - shotY(STARTS[shots])) > 60) return;
-  drag = { ...p, id: event.pointerId, started: event.timeStamp };
-  canvas.setPointerCapture(event.pointerId); canvas.focus({ preventScroll: true });
+canvas.addEventListener('pointerdown', event => {
+  if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
+  event.preventDefault(); canvas.focus({ preventScroll: true }); shoot();
 });
-function swipe(p, time) {
-  const input = flickInput(p.x - drag.x, drag.y - p.y, time - drag.started, 'basketball');
-  $('aim').value = input.aim; $('power').value = input.power; updateControls();
-}
-canvas.addEventListener('pointermove', (event) => {
-  if (!drag || event.pointerId !== drag.id) return;
-  swipe(courtPoint(event), event.timeStamp);
-});
-canvas.addEventListener('pointerup', (event) => {
-  if (!drag || event.pointerId !== drag.id) return;
-  const p = courtPoint(event), distance = drag.y - p.y;
-  swipe(p, event.timeStamp); drag = null;
-  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-  if (distance >= 25) shoot();
-  else $('status').textContent = 'Flick upward from the ball. A longer, faster flick adds power.';
-});
-canvas.addEventListener('pointercancel', () => { drag = null; });
-canvas.addEventListener('lostpointercapture', () => { drag = null; });
-canvas.addEventListener('keydown', (event) => {
-  if (event.code === 'Space' || event.code === 'Enter') { event.preventDefault(); if (!event.repeat) shoot(); }
+canvas.addEventListener('keydown', event => {
+  if (['Space', 'Enter'].includes(event.code)) { event.preventDefault(); if (!event.repeat) shoot(); }
 });
 $('shoot').addEventListener('click', shoot);
 $('restart').addEventListener('click', reset);
 $('play-again').addEventListener('click', () => { reset(); canvas.focus({ preventScroll: true }); });
-$('aim').addEventListener('input', updateControls);
-$('power').addEventListener('input', updateControls);
-applyTeam(); requestAnimationFrame(animate);
+$('team-stamp').textContent = { vols: 'TENNESSEE', gators: 'FLORIDA', tide: 'ALABAMA', texas: 'TEXAS' }[teamKey];
+for (const [key, value] of Object.entries({ accent: team.color, 'accent-light': team.light, 'team-floor': team.floor, 'button-ink': ['tide', 'texas'].includes(teamKey) ? '#fff' : '#141914' })) document.documentElement.style.setProperty(`--${key}`, value);
+$('team-name').textContent = team.name; $('back-link').href = `../${team.path}/`; $('back-link').textContent = `← Back to ${team.back}`;
+reset(); requestAnimationFrame(animate);

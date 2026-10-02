@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { RULES_VERSION, TEAMS } from '../../arcade/challenge.js';
+import { rulesVersion, TEAMS } from '../../arcade/challenge.js';
 import { replay } from '../../arcade/replay.js';
 const validGame = game => ['basketball', 'football'].includes(game);
 const validId = value => typeof value === 'string' && /^[0-9a-f-]{36}$/.test(value);
@@ -11,7 +11,7 @@ export function readToken(token, secret, now) {
   const expected = sign(payload || '', secret);
   if (extra || !signature || signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) throw new Error('Start a new round.');
   const round = JSON.parse(Buffer.from(payload, 'base64url').toString());
-  if (round.version !== RULES_VERSION || round.expires < now || round.started > now || !validGame(round.game) || !TEAMS.includes(round.team)) throw new Error('This round expired. Play again to post a score.');
+  if (round.version !== rulesVersion(round.game) || round.expires < now || round.started > now || !validGame(round.game) || !TEAMS.includes(round.team)) throw new Error('This round expired. Play again to post a score.');
   return round;
 }
 async function signingKey(store) {
@@ -36,7 +36,7 @@ export function createHandler(getStore, clock = Date.now) {
       if (request.method === 'GET') {
         const game = url.searchParams.get('game');
         if (!validGame(game)) return response({ error: 'Unknown game.' }, 400);
-        const rows = await store.get(`v${RULES_VERSION}/${game}`, { type: 'json' }) || [];
+        const rows = await store.get(`v${rulesVersion(game)}/${game}`, { type: 'json' }) || [];
         return response({ rows: publicRows(rows) });
       }
       if (!request.headers.get('content-type')?.includes('application/json')) return response({ error: 'Expected JSON.' }, 415);
@@ -58,7 +58,7 @@ export function createHandler(getStore, clock = Date.now) {
       if (body.action === 'start') {
         if (!validGame(body.game) || !TEAMS.includes(body.team) || !validId(body.player)) return response({ error: 'Unknown game or player.' }, 400);
         const secret = await signingKey(store);
-        const round = { id: randomUUID(), player: body.player, game: body.game, team: body.team, seed: randomBytes(4).readUInt32LE(), version: RULES_VERSION, started: now, expires: now + 3600000 };
+        const round = { id: randomUUID(), player: body.player, game: body.game, team: body.team, seed: randomBytes(4).readUInt32LE(), version: rulesVersion(body.game), started: now, expires: now + 3600000 };
         const payload = Buffer.from(JSON.stringify(round)).toString('base64url');
         return response({ token: `${payload}.${sign(payload, secret)}`, seed: round.seed });
       }
@@ -72,7 +72,7 @@ export function createHandler(getStore, clock = Date.now) {
         if (now - round.started + 1000 < result.duration * 1000) throw new Error('Finish playing the round before posting.');
       } catch (error) { return response({ error: error.message }, 400); }
       const entry = { id: round.id, player: round.player, name, team: round.team, score: result.score, made: result.made, longest: result.longest, created: now };
-      const key = `v${RULES_VERSION}/${round.game}`;
+      const key = `v${rulesVersion(round.game)}/${round.game}`;
       // Conditional writes preserve both scores when two fans finish together.
       for (let retry = 0; retry < 8; retry++) {
         const current = await store.getWithMetadata(key, { type: 'json' });

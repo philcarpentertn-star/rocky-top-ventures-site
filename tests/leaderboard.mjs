@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { createHandler } from '../netlify/lib/leaderboard.mjs';
+import { rulesVersion } from '../arcade/challenge.js';
 import { solve } from './arcade.mjs';
+assert.equal(rulesVersion('basketball'), 4);
+assert.equal(rulesVersion('football'), 3);
 const values = new Map(); let revision = 0, now = Date.now();
 const store = {
   async get(key, options) { const value = values.get(key)?.data; return value == null ? null : options?.type === 'json' ? structuredClone(value) : value; },
@@ -31,7 +34,7 @@ assert.equal(posted.rows.length, 1); assert.equal(posted.rows[0].team, 'texas');
 assert(!('player' in posted.rows[0])); assert(!('id' in posted.rows[0]));
 assert.equal((await (await call(submission)).json()).rows.length, 1, 'Retry is idempotent');
 const lesser = await start(player); now += 120000;
-await call({ ...submission, token: lesser.token, attempts: Array.from({ length: 10 }, () => ({ aim: 0, power: 0 })) });
+await call({ ...submission, token: lesser.token, attempts: Array.from({ length: 10 }, () => ({ time: 0 })) });
 assert.equal((await (await call(undefined, '?game=basketball')).json()).rows[0].score, 28);
 const rounds = await Promise.all(Array.from({ length: 5 }, () => start())); now += 120000;
 const results = await Promise.all(rounds.map((round, i) => call({ ...submission, token: round.token, attempts: solve('basketball', round.seed), name: `Fan ${i}` })));

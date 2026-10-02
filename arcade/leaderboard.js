@@ -79,7 +79,7 @@ export function leaderboard(game, team) {
       }
       return current;
     },
-    record(aim, power) { attempts.push({ aim, power }); },
+    record(aim, power) { attempts.push(typeof aim === 'object' ? aim : { aim, power }); },
     finish() {
       completed = true;
       if (token) { form.hidden = false; submit.disabled = false; status.textContent = 'Round complete! Post your score below. Your nickname will be public.'; }

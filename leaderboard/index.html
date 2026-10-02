@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="See the top basketball and football scores across Tennessee, Florida, Alabama and Texas.">
+  <title>Leaderboards · Rocky Top Ventures</title>
+  <link rel="stylesheet" href="../basketball/style.css">
+  <script type="module" src="./scores.js"></script>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="masthead"><a id="back-link" href="../">← Back to fan hubs</a><span>ROCKY TOP VENTURES <b>/ ARCADE</b></span></header>
+    <section class="game-heading"><div><p class="eyebrow">ALL SCHOOLS. ONE COMPETITION.</p><h1>Fan leaderboards<span>.</span></h1><p>Tennessee, Florida, Alabama and Texas compete together. Top 20 in each game.</p></div></section>
+    <section class="leaderboard" data-game="basketball" aria-labelledby="basketball-title">
+      <div class="leaderboard-heading"><h2 id="basketball-title">🏀 Basketball</h2><button type="button">Refresh scores</button></div>
+      <p data-status role="status">Loading shared scores…</p>
+      <p data-empty hidden>No scores yet. Be the first fan on the board!</p>
+      <div class="leaderboard-table"><table><caption class="sr-only">Top 20 basketball scores across all schools</caption><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">School</th><th scope="col">Score</th></tr></thead><tbody></tbody></table></div>
+      <p><a data-play href="../basketball/">Play Basketball →</a></p>
+    </section>
+    <section class="leaderboard" data-game="football" aria-labelledby="football-title">
+      <div class="leaderboard-heading"><h2 id="football-title">🏈 Football</h2><button type="button">Refresh scores</button></div>
+      <p data-status role="status">Loading shared scores…</p>
+      <p data-empty hidden>No scores yet. Be the first fan on the board!</p>
+      <div class="leaderboard-table"><table><caption class="sr-only">Top 20 football scores across all schools</caption><thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">School</th><th scope="col">Score</th></tr></thead><tbody></tbody></table></div>
+      <p><a data-play href="../football/">Play Football →</a></p>
+    </section>
+    <footer>Finish a round and post your score to compete.<span>© Rocky Top Ventures</span></footer>
+    <noscript><p>Enable JavaScript to load the shared leaderboards.</p></noscript>
+  </main>
+</body>
+</html>

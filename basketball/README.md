@@ -1,36 +1,7 @@
-# Hoops Challenge
+# Tap Hoops
 
-Updated to Arcade v3: flick-speed input, changing wind and a shared Netlify leaderboard.
-See [Arcade v3 documentation](../arcade/README.md) for current hosting and verification.
-The original layout and field reference notes below are retained for context.
+Ten shots across five levels. Tap/click the court or use the Shoot button; Space and Enter work with the canvas focused. Every two shots the hoop recedes, shrinks, and moves faster. The ball travels straight ahead in 0.8 seconds, so players lead the moving hoop. Each shot resolves after another 0.6 seconds; idle shots fire after 120 seconds. Hidden tabs pause simulation.
 
-HTML/CSS/JavaScript game for the existing site hosting. Practice works without a server; shared scores use the Netlify function.
+All four school themes share identical rules. Seeded starting phases and shot times are replayed by the server using `timing.js`. Basketball uses the v4 leaderboard and device bests; football keeps v3. Old basketball scores are retained in storage but excluded from the new competition.
 
-Each team hub links to the matching theme:
-- `/basketball/?team=vols`
-- `/basketball/?team=gators`
-- `/basketball/?team=tide`
-
-The game defaults to Tennessee if the team parameter is absent or unknown. Personal bests are stored separately for each team on the current device. If browser storage is unavailable, play still works and the page explains that the best score is temporary.
-
-## Local preview
-
-From the repository root:
-
-```sh
-python3 -m http.server 8000 --bind 127.0.0.1
-```
-
-Open `http://127.0.0.1:8000/rockytop/` and follow **Play Vols Hoops**, or open a game URL directly. Keep the preview local until the user approves publishing.
-
-## Physics checks
-
-With Node.js 22 or newer:
-
-```sh
-node --experimental-default-type=module tests/hoops.mjs
-```
-
-Checks cover made and missed shots, rim bounces, all ten shooting positions, consistent scoring across simulation steps, streak bonuses, net transit time, and scoring only after the ball clears the net.
-
-Browser checks: drag upward from the ball; take shots with the keyboard controls; complete ten shots; replay; reload to verify the best score; follow each team's game link and return link; inspect a narrow phone-sized viewport. A resized desktop browser is not a substitute for final testing on a physical phone.
+Two points per make; three points from the third consecutive make onward. Maximum score: 28. Nicknames and posting work through the existing shared leaderboard.

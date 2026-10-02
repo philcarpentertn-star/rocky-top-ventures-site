@@ -1,9 +1,11 @@
+import { replayTiming } from '../basketball/timing.js';
 import { challenge } from './challenge.js';
 import { STARTS, launch, stepShot, pointsForMake } from '../basketball/physics.js';
 import { KICK_SPOTS, launchKick, stepKick, nextDistance } from '../football/physics.js';
 
 // Accept shot inputs, never a score supplied by the browser.
 export function replay(game, seed, attempts) {
+  if (game === 'basketball') return replayTiming(challenge(game, seed), attempts);
   const count = game === 'basketball' ? 10 : game === 'football' ? 5 : 0;
   if (!count || !Array.isArray(attempts) || attempts.length !== count) throw new Error('Complete a full round first.');
   const winds = challenge(game, seed);

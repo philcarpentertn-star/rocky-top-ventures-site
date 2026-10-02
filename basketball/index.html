@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Ten shots. Your team. Chase your personal best in the Rocky Top Ventures basketball shooting game.">
+  <meta name="description" content="Tap to shoot at a moving hoop. Five levels, ten shots, and all schools competing together.">
   <meta name="theme-color" content="#101714">
   <title>Hoops Challenge · Rocky Top Ventures</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./game.js?v=outdoor-arcade-3"></script>
+  <script type="module" src="./game.js?v=tap-hoops-4"></script>
 </head>
 <body>
   <main class="game-shell">
@@ -16,7 +16,7 @@
       <span>ROCKY TOP VENTURES <b>/ ARCADE</b></span>
     </header>
     <section class="game-heading">
-      <div><p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p><h1>Hoops Challenge<span>.</span></h1><p>Outdoor court. Around the arc. Read the wind.</p></div>
+      <div><p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p><h1>Hoops Challenge<span>.</span></h1><p>Time your tap. Lead the hoop. Go the distance.</p></div>
       <span class="team-stamp" id="team-stamp">TENNESSEE</span>
     </section>
     <div class="game-layout">
@@ -28,26 +28,21 @@
           <div><span>PERSONAL BEST</span><strong id="best">00</strong></div>
         </div>
         <div class="court-wrap">
-          <canvas id="court" width="600" height="660" tabindex="0" aria-label="Basketball court. Swipe upward from the ball to shoot, or use the aim and power controls below.">Use the aim and power controls and the Shoot button to play.</canvas>
-          <div class="court-badge"><span id="team-name">VOL NATION</span><span id="wind">Reading the wind…</span></div>
+          <canvas id="court" width="600" height="660" tabindex="0" aria-label="Basketball court. Tap to shoot at the moving hoop, or press Space or Enter.">Use the Shoot button to play.</canvas>
+          <div class="court-badge"><span id="team-name">VOL NATION</span><span id="wind">LEVEL 1 / 5</span></div>
           <div class="result" id="result" hidden>
             <p class="eyebrow">THAT’S A WRAP</p><h2 id="result-title">Nice round.</h2><p id="result-score"></p><a class="post-score-link" href="#leaderboard">See leaderboard &amp; post score ↓</a><button id="play-again" type="button">Play again ↗</button>
           </div>
         </div>
-        <div class="shot-status" id="status" role="status" aria-live="polite">Swipe up from the ball, or set your shot below.</div>
+        <div class="shot-status" id="status" role="status" aria-live="polite">Tap to shoot. Time the moving hoop.</div>
       </section>
       <aside class="sideline">
         <section class="controls" aria-labelledby="controls-title">
-          <p class="eyebrow">YOUR NEXT BUCKET</p><h2 id="controls-title">Line it up.</h2>
-          <p>Flick upward from the ball. Longer, faster flicks add power. Aim into the wind: it changes after every shot and gets stronger as you go.</p>
-          <div class="control-label"><label for="aim">Aim</label><output id="aim-value" for="aim">Center</output></div>
-          <input id="aim" type="range" min="-40" max="40" value="0" step="0.5">
-          <div class="range-hints"><span>← Left</span><span>Right →</span></div>
-          <div class="control-label"><label for="power">Power</label><output id="power-value" for="power">72%</output></div>
-          <input id="power" type="range" min="0" max="100" value="72" step="1">
-          <div class="range-hints"><span>Soft touch</span><span>Let it fly</span></div>
-          <button class="shoot-button" id="shoot" type="button">Shoot <span>↗</span></button>
-          <p class="keyboard-note">Keyboard: adjust the sliders with arrow keys, then press Enter on Shoot. Space shoots when the court is focused.</p>
+          <p class="eyebrow">ALL ABOUT TIMING</p><h2 id="controls-title">Wait for it.</h2>
+          <p>The hoop moves left and right. Tap anywhere on the court to shoot straight ahead. Lead the hoop: the ball takes a moment to arrive.</p>
+          <p>Five levels. Two shots per level. The basket moves farther away and faster as you progress.</p>
+          <button class="shoot-button" id="shoot" type="button">Tap to shoot <span>↑</span></button>
+          <p class="keyboard-note">Mouse: click the court or Shoot. Keyboard: focus the court and press Space or Enter. Shots fire once per tap.</p>
           <button class="restart" id="restart" type="button">Start a new round</button>
         </section>
         <section class="rules"><p class="eyebrow">MAKE EVERY SHOT COUNT</p><div><b>02</b><p>Points for every bucket.</p></div><div><b>+1</b><p>Bonus on your third consecutive make and every make after it.</p></div><p class="save-note" id="save-note">Your best stays on this device. No account needed.</p></section>

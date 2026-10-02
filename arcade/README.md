@@ -1,3 +1,7 @@
+# Basketball update: Tap Hoops
+
+Basketball now uses tap timing, a moving hoop, and five distance levels. See `basketball/README.md`. Its scores use `v4/basketball`; football remains on `v3/football`. The v3 basketball implementation described below is historical.
+
 # Arcade v3: flicks, wind and shared scores
 
 Both games keep their team themes and keyboard controls. Flick direction controls aim;
