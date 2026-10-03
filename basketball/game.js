@@ -1,5 +1,5 @@
 import { leaderboard } from '../arcade/leaderboard.js';
-import { SHOOTERS, ROUND_SECONDS, SHOT_SECONDS, FLIGHT, RECOVERY, levelFor, hoopAt, evaluate } from './timing.js';
+import { SHOOTERS, ROUND_SECONDS, SHOT_SECONDS, FIRE_INTERVAL, FLIGHT, RECOVERY, levelFor, hoopAt, evaluate } from './timing.js';
 const $ = id => document.getElementById(id);
 const canvas = $('court'), ctx = canvas.getContext('2d');
 const teams = {
@@ -16,20 +16,22 @@ background.src = './assets/street-court.png'; playerAtlas.src = './assets/team-p
 let selected = 1, transition = 0, running = false, ended = false, startedAt = 0, shownSecond = -1, currentLevel = 1;
 const team = teams[teamKey], board = leaderboard('basketball', teamKey);
 let score = 0, shots = 0, made = 0, streak = 0, best = 0, ready = false;
-let phases = [], elapsed = 0, ball = null, feedback = '', storageAvailable = true;
-try { best = Number(localStorage.getItem(`rtv-hoops-v6-best-${teamKey}`)) || 0; } catch { storageAvailable = false; }
+let nextShot = SHOOTERS.map(() => 0);
+let phases = [], elapsed = 0, balls = [], feedback = '', storageAvailable = true;
+try { best = Number(localStorage.getItem(`rtv-hoops-v7-best-${teamKey}`)) || 0; } catch { storageAvailable = false; }
 function sync() {
   $('score').textContent = String(score).padStart(2, '0');
   $('shots').textContent = `${Math.ceil(Math.max(0, ROUND_SECONDS - elapsed))}s`;
   $('streak').textContent = streak;
   $('best').textContent = best;
   $('wind').textContent = `LEVEL ${levelFor(elapsed)} / 5`;
-  $('shoot').disabled = !ready || !running || ended || !!ball || elapsed >= ROUND_SECONDS;
+  $('shoot').disabled = !ready || !running || ended || elapsed >= ROUND_SECONDS;
   document.querySelectorAll('[data-shooter]').forEach(button => { button.disabled = $('shoot').disabled; button.setAttribute('aria-pressed', String(Number(button.dataset.shooter) === selected)); });
   $('save-note').textContent = storageAvailable ? 'Your best stays on this device. No account needed.' : 'Your best lasts for this visit.';
 }
 async function reset() {
-  ready = false; running = false; ended = false; transition = 0; currentLevel = 1; shownSecond = -1; score = shots = made = streak = elapsed = 0; ball = null; feedback = '';
+  ready = false; running = false; ended = false; transition = 0; currentLevel = 1; shownSecond = -1; score = shots = made = streak = elapsed = 0; balls = []; feedback = '';
+  nextShot = SHOOTERS.map(() => 0);
   $('intro').hidden = false; $('start-round').disabled = true;
   $('result').hidden = true; $('status').textContent = 'Getting the court ready…'; sync();
   const next = await board.start();
@@ -46,11 +48,13 @@ function startRound() {
 function shoot(shooter = selected) {
   if (!ready || !running || ended) return;
   updateRound(performance.now());
-  if (ball || ended || elapsed >= ROUND_SECONDS) return;
+  if (ended || elapsed >= ROUND_SECONDS) return;
   if (!Number.isInteger(shooter) || shooter < 0 || shooter >= SHOOTERS.length) return;
+  if (elapsed < nextShot[shooter]) return;
+  nextShot[shooter] = elapsed + FIRE_INTERVAL;
   selected = shooter;
   const time = elapsed;
-  ball = { time, shooter, age: 0, ...evaluate(time, phases[0], shooter) };
+  balls.push({ time, shooter, age: 0, ...evaluate(time, phases[0], shooter) });
   board.record({ time, shooter }); feedback = ''; $('status').textContent = 'Shot away…'; sync();
 }
 function finishRound() {
@@ -62,13 +66,13 @@ function finishRound() {
   $('status').textContent = `Round complete: ${score} points. ${made} of ${shots} made.`;
   $('play-again').focus({ preventScroll: true });
 }
-function finishShot() {
+function finishShot(ball) {
   if (ball.made) { made++; streak++; const points = streak >= 3 ? 3 : 2; score += points; feedback = `SWISH! +${points}`; }
   else { streak = 0; feedback = 'Just missed. Lead the moving hoop!'; }
-  shots++; ball = null;
+  shots++;
   if (score > best) {
     best = score;
-    try { localStorage.setItem(`rtv-hoops-v6-best-${teamKey}`, String(best)); } catch { storageAvailable = false; }
+    try { localStorage.setItem(`rtv-hoops-v7-best-${teamKey}`, String(best)); } catch { storageAvailable = false; }
   }
   sync();
   $('status').textContent = `${feedback} ${Math.ceil(Math.max(0, ROUND_SECONDS - elapsed))} seconds left.`;
@@ -79,8 +83,9 @@ function updateRound(now) {
   elapsed = Math.max(0, (now - startedAt) / 1000);
   const level = levelFor(elapsed);
   if (level !== currentLevel) { currentLevel = level; transition = elapsed + .9; }
-  if (ball) { ball.age = elapsed - ball.time; if (ball.age >= SHOT_SECONDS) finishShot(); }
-  if (elapsed >= ROUND_SECONDS && !ball) { finishRound(); return; }
+  for (const ball of balls) ball.age = elapsed - ball.time;
+  while (balls.length && balls[0].age >= SHOT_SECONDS) finishShot(balls.shift());
+  if (elapsed >= ROUND_SECONDS && !balls.length) { finishRound(); return; }
   const second = Math.ceil(Math.max(0, ROUND_SECONDS - elapsed));
   if (second !== shownSecond) { shownSecond = second; sync(); }
 }
@@ -118,6 +123,7 @@ function basket(hoop, front = false) {
     ctx.fillStyle = glass; ctx.fill(); ctx.strokeStyle = '#344c49'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     ctx.strokeStyle = '#814b53'; ctx.lineWidth = 4; ctx.strokeRect(-30, -59, 60, 43);
   }
+  const ball = balls.findLast(ball => ball.made && ball.age >= FLIGHT);
   const stretch = ball?.made && ball.age >= FLIGHT ? Math.sin(Math.min(1, (ball.age - FLIGHT) / RECOVERY) * Math.PI) * 12 : 0;
   ctx.strokeStyle = front ? '#fff9eb' : '#a5b5b0'; ctx.lineWidth = front ? 1.8 : 1;
   for (let col = 0; col < 9; col++) for (const direction of [-1, 1]) {
@@ -134,7 +140,8 @@ function basket(hoop, front = false) {
   ctx.strokeStyle = '#ff8f43'; ctx.lineWidth = 5; ctx.stroke(); ctx.restore();
 }
 function player(x, index) {
-  const active = ball ? ball.shooter === index : selected === index;
+  const ball = balls.findLast(ball => ball.shooter === index && ball.age < FIRE_INTERVAL);
+  const active = !!ball || selected === index;
   const lift = active && ball ? Math.sin(Math.min(ball.age / .22, 1) * Math.PI) * 7 : 0;
   if (playerAtlas.complete && playerAtlas.naturalWidth) {
     const cellW = playerAtlas.naturalWidth / 2, cellH = playerAtlas.naturalHeight / 2;
@@ -156,9 +163,9 @@ function draw() {
   ctx.fillStyle = '#78927c'; ctx.fillRect(0, 0, 600, 450);
   if (background.complete && background.naturalWidth) ctx.drawImage(background, 0, 0, 600, 450);
   basket(hoop);
-  if (!ball || ball.age < FLIGHT) basket(hoop, true);
+  basket(hoop, true);
   SHOOTERS.forEach((x, i) => player(x, i));
-  if (ball) {
+  for (const ball of balls) {
     const destination = project(ball.hoop);
     const progress = Math.min(ball.age / FLIGHT, 1), drop = Math.max(0, ball.age - FLIGHT) / RECOVERY;
     const y = 304 + (destination.y - 304) * progress - Math.sin(progress * Math.PI) * 108 + drop * 100;
@@ -180,7 +187,8 @@ function draw() {
   if (running && !ended && elapsed < transition) {
     ctx.save(); ctx.textAlign = 'center'; ctx.font = 'italic 900 36px Arial'; ctx.strokeStyle = '#23362b'; ctx.lineWidth = 5; ctx.strokeText('BACK IT UP!', 300, 220); ctx.fillStyle = '#fff36c'; ctx.fillText('BACK IT UP!', 300, 220); ctx.font = 'bold 16px Arial'; ctx.fillText(`LEVEL ${levelFor(elapsed)}`, 300, 248); ctx.restore();
   }
-  if (ball && ball.age >= FLIGHT) {
+  const ball = balls.findLast(ball => ball.age >= FLIGHT);
+  if (ball) {
     ctx.save(); ctx.textAlign = 'center'; ctx.font = 'italic 900 32px Arial'; ctx.lineWidth = 5; ctx.strokeStyle = '#23362b';
     const message = ball.made ? (streak >= 2 ? 'LIGHTNING BONUS!' : 'SWISH!') : 'JUST WIDE!';
     ctx.strokeText(message, 300, 218); ctx.fillStyle = ball.made ? '#fff36c' : '#fff5e0'; ctx.fillText(message, 300, 218); ctx.restore();
@@ -192,7 +200,7 @@ function animate(time) {
   updateRound(time); draw(); requestAnimationFrame(animate);
 }
 canvas.addEventListener('pointerdown', event => {
-  if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
   event.preventDefault(); canvas.focus({ preventScroll: true });
   const rect = canvas.getBoundingClientRect();
   const x = (event.clientX - rect.left) * 600 / rect.width;

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { evaluate, hoopAt, motionAt, FLIGHT, levelFor, replayTiming, ROUND_SECONDS, SHOT_SECONDS, MAX_SHOTS, SHOOTERS } from '../basketball/timing.js';
+import { evaluate, hoopAt, motionAt, FLIGHT, levelFor, replayTiming, ROUND_SECONDS, SHOT_SECONDS, FIRE_INTERVAL, MAX_SHOTS, SHOOTERS } from '../basketball/timing.js';
 import { challenge, flickInput } from '../arcade/challenge.js';
 import { replay } from '../arcade/replay.js';
 import { KICK_SPOTS, launchKick, stepKick } from '../football/physics.js';
@@ -9,7 +9,7 @@ export function solve(game, seed) {
     const attempts = []; let time = 0;
     while (time < ROUND_SECONDS) {
       const shooter = SHOOTERS.findIndex((_, i) => evaluate(time, phases[0], i).made);
-      if (shooter !== -1) { attempts.push({time, shooter}); time += SHOT_SECONDS; }
+      if (shooter !== -1) { attempts.push({time, shooter}); time += FIRE_INTERVAL; }
       else time += .01;
     }
     return attempts;
@@ -38,7 +38,9 @@ const phases = challenge('basketball',42);
 assert.deepEqual(replayTiming(phases, []), {score:0,made:0,longest:0,duration:60});
 for (const time of [-1,NaN,Infinity,60,61]) assert.throws(() => replayTiming(phases,[{time,shooter:0}]));
 for (const shooter of [-1,4,1.5,undefined,NaN]) assert.throws(() => replayTiming(phases,[{time:0,shooter}]));
-assert.throws(() => replayTiming(phases,[{time:1,shooter:0},{time:2,shooter:1}]), 'Overlapping shots rejected');
+assert.doesNotThrow(() => replayTiming(phases, SHOOTERS.map((_,shooter)=>({time:1,shooter}))), 'Simultaneous shots from all four players');
+assert.doesNotThrow(() => replayTiming(phases,[{time:1,shooter:0},{time:1+FIRE_INTERVAL,shooter:0}]), 'Same player shoots again before first ball lands');
+assert.throws(() => replayTiming(phases,[{time:1,shooter:0},{time:1.01,shooter:0}]), 'Per-player reload enforced');
 assert.throws(() => replayTiming(phases,[{time:4,shooter:0},{time:1,shooter:1}]), 'Out-of-order shots rejected');
 assert.throws(() => replayTiming(phases,Array(MAX_SHOTS+1).fill({time:0,shooter:0})));
 assert.equal(replayTiming(phases,[{time:59.999,shooter:0}]).duration, 59.999+SHOT_SECONDS, 'Buzzer beater finishes after zero');

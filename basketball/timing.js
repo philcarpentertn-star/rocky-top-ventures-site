@@ -4,7 +4,8 @@ export const ROUND_SECONDS = 60;
 export const FLIGHT = .8;
 export const RECOVERY = .6;
 export const SHOT_SECONDS = FLIGHT + RECOVERY;
-export const MAX_SHOTS = Math.ceil(ROUND_SECONDS / SHOT_SECONDS);
+export const FIRE_INTERVAL = .15; // Independent reload for each player.
+export const MAX_SHOTS = SHOOTERS.length * Math.ceil(ROUND_SECONDS / FIRE_INTERVAL);
 export function levelFor(time) { return Math.min(5, Math.max(1, Math.floor(time / 12) + 1)); }
 export function motionAt(time) {
   const completed = Math.min(4, Math.floor(time / 12));
@@ -21,13 +22,17 @@ export function evaluate(time, phase, shooter = 1) {
 }
 export function replayTiming(phases, attempts) {
   if (!Array.isArray(attempts) || attempts.length > MAX_SHOTS) throw new Error('Invalid round.');
-  let score = 0, made = 0, streak = 0, nextShot = 0;
-  attempts.forEach((input, index) => {
-    if (!input || !Number.isFinite(input.time) || input.time < nextShot - 1e-9 || input.time >= ROUND_SECONDS || !Number.isInteger(input.shooter) || input.shooter < 0 || input.shooter >= SHOOTERS.length) throw new Error('Invalid shot timing.');
+  let score = 0, made = 0, streak = 0, previous = 0, finish = 0;
+  const nextShot = SHOOTERS.map(() => 0);
+  attempts.forEach(input => {
+    if (!input || !Number.isFinite(input.time) || input.time < previous || input.time >= ROUND_SECONDS || !Number.isInteger(input.shooter) || input.shooter < 0 || input.shooter >= SHOOTERS.length) throw new Error('Invalid shot timing.');
+    if (input.time < nextShot[input.shooter] - 1e-9) throw new Error('Player is reloading.');
     const good = evaluate(input.time, phases[0], input.shooter).made;
     if (good) { made++; streak++; score += streak >= 3 ? 3 : 2; } else streak = 0;
-    nextShot = input.time + SHOT_SECONDS;
+    previous = input.time;
+    nextShot[input.shooter] = input.time + FIRE_INTERVAL;
+    finish = input.time + SHOT_SECONDS;
   });
   // A ball released before the buzzer is allowed to finish after zero.
-  return { score, made, longest: 0, duration: Math.max(ROUND_SECONDS, nextShot) };
+  return { score, made, longest: 0, duration: Math.max(ROUND_SECONDS, finish) };
 }

@@ -48,7 +48,7 @@ export function createHandler(getStore, clock = Date.now) {
         const { value, done } = await reader.read();
         if (done) break;
         bytes += value.byteLength;
-        if (bytes > 8192) { await reader.cancel(); return response({ error: 'Request too large.' }, 413); }
+        if (bytes > 131072) { await reader.cancel(); return response({ error: 'Request too large.' }, 413); }
         chunks.push(Buffer.from(value));
       }
       let body;

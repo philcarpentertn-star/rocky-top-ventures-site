@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { createHandler } from '../netlify/lib/leaderboard.mjs';
 import { rulesVersion } from '../arcade/challenge.js';
 import { solve } from './arcade.mjs';
-assert.equal(rulesVersion('basketball'), 6);
+assert.equal(rulesVersion('basketball'), 7);
 assert.equal(rulesVersion('football'), 3);
 const values = new Map(); let revision = 0, now = Date.now();
 const store = {
@@ -51,3 +51,11 @@ assert.equal((await handler(new Request('https://example.com/api', { method: 'PO
 const unavailable = createHandler(() => { throw new Error('offline'); });
 assert.equal((await unavailable(new Request('https://example.com/?game=basketball'))).status, 503);
 console.log('Passed: persisted shared scores, replay verification, retries, concurrent writers, game separation, invalid/expired rounds, and outages.');
+
+const rapid = await start(); now += 120000;
+const volley = Array.from({length:400},(_,n)=> Array.from({length:4},(_,shooter)=>({time:n*.15,shooter}))).flat();
+const rapidBody = {...submission,token:rapid.token,attempts:volley};
+assert(JSON.stringify(rapidBody).length > 8192);
+assert.equal((await call(rapidBody)).status,200, 'Full rapid-fire round accepted above old payload limit');
+assert.equal((await call({...rapidBody,padding:'x'.repeat(131072)})).status,413);
+console.log('Passed: maximum rapid-fire volley submission and bounded payloads.');

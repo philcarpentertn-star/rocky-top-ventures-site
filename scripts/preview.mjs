@@ -33,7 +33,7 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url, origin);
     if (url.pathname === '/.netlify/functions/leaderboard') {
       let bytes = 0; const parts = [];
-      for await (const part of req) { bytes += part.length; if (bytes > 8192) { res.writeHead(413).end(); return; } parts.push(part); }
+      for await (const part of req) { bytes += part.length; if (bytes > 131072) { res.writeHead(413).end(); return; } parts.push(part); }
       const response = await handler(new Request(url, { method: req.method, headers: req.headers, ...(req.method === 'POST' ? { body: Buffer.concat(parts) } : {}) }));
       res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(Buffer.from(await response.arrayBuffer())); return;
     }

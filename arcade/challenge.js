@@ -1,6 +1,6 @@
 // Shared by the browser and score verifier. Keep rules versioned with the board.
 export const RULES_VERSION = 3;
-export const rulesVersion = game => game === 'basketball' ? 6 : RULES_VERSION;
+export const rulesVersion = game => game === 'basketball' ? 7 : RULES_VERSION;
 export const TEAMS = ['vols', 'gators', 'tide', 'texas'];
 export function challenge(game, seed) {
   let state = seed >>> 0;

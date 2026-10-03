@@ -1,6 +1,6 @@
 # Basketball update: Tap Hoops
 
-Basketball now uses tap timing, four shooters, a hoop that keeps moving during each shot, and a 60-second round with distance increasing every 12 seconds. See `basketball/README.md`. Its scores use `v6/basketball`; football remains on `v3/football`. The v3 basketball implementation described below is historical.
+Basketball now uses tap timing, four shooters, a hoop that keeps moving during each shot, and a 60-second round with distance increasing every 12 seconds. See `basketball/README.md`. Its scores use `v7/basketball`; football remains on `v3/football`. The v3 basketball implementation described below is historical.
 
 # Arcade v3: flicks, wind and shared scores
 
